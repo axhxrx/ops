@@ -20,7 +20,8 @@ export class SelectFromListOp<OptionsT extends string[]> extends Op
   async run(io?: IOContext)
   {
     type SuccessT = typeof this.options[number];
-    const { stdin, stdout } = this.getIO(io);
+    const ioContext = this.getIO(io);
+    const { stdin, stdout } = ioContext;
 
     const chosen = await new Promise<SuccessT>((resolve) =>
     {
@@ -36,6 +37,7 @@ export class SelectFromListOp<OptionsT extends string[]> extends Op
             resolve(item.value as SuccessT);
           }}
         />,
+        // @ts-expect-error - Ink expects WriteStream but we use WritableStream for logging
         { stdin, stdout },
       );
     });

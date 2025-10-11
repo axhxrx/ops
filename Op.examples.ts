@@ -1,52 +1,11 @@
 import type { IOContext } from './IOContext';
 import { Op } from './Op.ts';
 import type { OutcomeOf } from './Outcome.ts';
+import { PrintOp } from './PrintOp';
 
-export class PrintOp extends Op
-{
-  constructor(
-    private message: string,
-    private prohibitedWords?: string[],
-  )
-  {
-    super();
-  }
-
-  get name(): string
-  {
-    return `PrintOp(${this.message})`;
-  }
-
-  async run(_io?: IOContext)
-  {
-    await Promise.resolve();
-    try
-    {
-      // Check for prohibited words
-      if (this.prohibitedWords?.some((word) => this.message.includes(word)))
-      {
-        // The 'as const' is CRITICAL - it preserves the literal type 'ProhibitedWord'
-        return this.fail('ProhibitedWord' as const, `Message: ${this.message}`);
-      }
-
-      // Check message length
-      if (this.message.length > 100)
-      {
-        // Another literal type preserved with 'as const'
-        return this.fail('MessageTooLong' as const, `Length: ${this.message.length}`);
-      }
-
-      // Success path
-      console.log(this.message);
-      return this.succeed(this.message);
-    }
-    catch (error)
-    {
-      // Catch-all for unexpected errors
-      return this.unknownError(String(error));
-    }
-  }
-}
+// PrintOp has been moved to its own file: PrintOp.ts
+// It's re-exported here for backwards compatibility
+export { PrintOp } from './PrintOp';
 
 const _runExample = async () =>
 {

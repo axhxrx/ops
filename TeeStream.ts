@@ -1,0 +1,112 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-floating-promises */
+import { Writable } from 'stream';
+
+/**
+ A writable stream that writes to both console (stdout) and a log file
+
+ "Tee" is named after the Unix `tee` command which reads from stdin
+ and writes to both stdout and a file simultaneously.
+ */
+export class TeeStream extends Writable
+{
+  private logWriter: ReturnType<typeof Bun.file> & { write: (chunk: string) => void };
+  private logPath: string;
+
+  constructor(logPath: string)
+  {
+    super();
+    this.logPath = logPath;
+    // Bun.file().writer() returns a writable stream
+    this.logWriter = Bun.file(logPath).writer() as any;
+  }
+
+  /**
+   Write implementation - writes to both console and log file
+   */
+  override _write(chunk: any, encoding: BufferEncoding, callback: (error?: Error | null) => void): void
+  {
+    try
+    {
+      // Write to console (stdout)
+      process.stdout.write(chunk, encoding);
+
+      // Write to log file with timestamp
+      const timestamp = new Date().toISOString();
+      const text = chunk.toString();
+
+      // Only add timestamp at the start of new lines
+      const lines = text.split('\n');
+      const timestampedLines = lines.map((line: string, index: number) =>
+      {
+        // Don't timestamp empty lines or continuation lines
+        if (line.length === 0) return line;
+        // Add timestamp to first line and lines after newlines
+        if (index === 0 || lines[index - 1].endsWith('\n'))
+        {
+          return `[${timestamp}] ${line}`;
+        }
+        return line;
+      });
+
+      this.logWriter.write(timestampedLines.join('\n'));
+
+      callback();
+    }
+    catch (error)
+    {
+      callback(error as Error);
+    }
+  }
+
+  /**
+   Final cleanup - flush and close the log file
+   */
+  override _final(callback: (error?: Error | null) => void): void
+  {
+    try
+    {
+      // Bun's writer has an end() method
+      if ('end' in this.logWriter && typeof this.logWriter.end === 'function')
+      {
+        this.logWriter.end();
+      }
+      callback();
+    }
+    catch (error)
+    {
+      callback(error as Error);
+    }
+  }
+
+  /**
+   Clean up when stream is destroyed
+   */
+  override _destroy(error: Error | null, callback: (error: Error | null) => void): void
+  {
+    try
+    {
+      if ('end' in this.logWriter && typeof this.logWriter.end === 'function')
+      {
+        this.logWriter.end();
+      }
+      callback(error);
+    }
+    catch (err)
+    {
+      callback(err as Error);
+    }
+  }
+
+  /**
+   Get the path to the log file
+   */
+  getLogPath(): string
+  {
+    return this.logPath;
+  }
+}

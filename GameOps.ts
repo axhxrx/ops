@@ -6,6 +6,7 @@
 
 import type { IOContext } from './IOContext';
 import { Op } from './Op';
+import { PrintOp } from './PrintOp';
 import { SelectFromListOp } from './SelectFromListOp';
 
 /**
@@ -15,12 +16,19 @@ export class WelcomeOp extends Op
 {
   name = 'WelcomeOp';
 
-  run(_io?: IOContext)
+  async run(io?: IOContext)
   {
-    console.log('Guess my name!\n');
+    // Print the welcome message using PrintOp (respects IO context!)
+    const printOp = new PrintOp('Guess my name!\n\n');
+    const printResult = await printOp.run(io);
+
+    if (!printResult.ok)
+    {
+      return printResult;
+    }
 
     // Return the next op to run
-    return Promise.resolve(this.succeed(new SelectNameOp()));
+    return this.succeed(new SelectNameOp());
   }
 }
 
@@ -58,25 +66,36 @@ export class ResultOp extends Op
     super();
   }
 
-  run(_io?: IOContext)
+  async run(io?: IOContext)
   {
+    // Determine the message based on selection
+    let message: string;
     switch (this.selectedName)
     {
       case 'Clinton':
-        console.log('\n\n👎 You guessed wrong!\n\nGAME OVER');
+        message = '\n\n👎 You guessed wrong!\n\nGAME OVER\n';
         break;
       case 'Trump':
-        console.log('\n\n🖕 What?! FUCK YOU, shitbird! Go eat a bag of 🍆🍆🍆\n\nGAME OVER');
+        message = '\n\n🖕 What?! FUCK YOU, shitbird! Go eat a bag of 🍆🍆🍆\n\nGAME OVER\n';
         break;
       case 'Obama':
-        console.log('\n\n🏆 That is CORRECT! You won the game.\n\nThank you for playing!');
+        message = '\n\n🏆 That is CORRECT! You won the game.\n\nThank you for playing!\n';
         break;
       default:
-        console.log('\n\n❓ Unknown name\n\nGAME OVER');
+        message = '\n\n❓ Unknown name\n\nGAME OVER\n';
         break;
     }
 
+    // Print using PrintOp (respects IO context!)
+    const printOp = new PrintOp(message);
+    const printResult = await printOp.run(io);
+
+    if (!printResult.ok)
+    {
+      return printResult;
+    }
+
     // Return nothing - this ends the game (stack will pop and be empty)
-    return Promise.resolve(this.succeed(undefined));
+    return this.succeed(undefined);
   }
 }
