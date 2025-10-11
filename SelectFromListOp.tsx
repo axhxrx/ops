@@ -1,5 +1,6 @@
 import { render } from 'ink';
 import SelectInput from 'ink-select-input';
+import type { IOContext } from './IOContext';
 import { Op } from './Op';
 
 /**
@@ -16,9 +17,10 @@ export class SelectFromListOp<OptionsT extends string[]> extends Op
     super();
   }
 
-  async run()
+  async run(io?: IOContext)
   {
     type SuccessT = typeof this.options[number];
+    const { stdin, stdout } = this.getIO(io);
 
     const chosen = await new Promise<SuccessT>((resolve) =>
     {
@@ -34,6 +36,7 @@ export class SelectFromListOp<OptionsT extends string[]> extends Op
             resolve(item.value as SuccessT);
           }}
         />,
+        { stdin, stdout },
       );
     });
 

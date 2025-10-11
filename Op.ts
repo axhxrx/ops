@@ -1,3 +1,4 @@
+import type { IOContext } from './IOContext';
 import type { Failure, Success } from './Outcome.ts';
 
 /**
@@ -6,7 +7,19 @@ import type { Failure, Success } from './Outcome.ts';
 export abstract class Op
 {
   abstract name: string;
-  abstract run(): Promise<Success<unknown> | Failure<unknown>>;
+  abstract run(io?: IOContext): Promise<Success<unknown> | Failure<unknown>>;
+
+  /**
+   Get IO context, defaulting to process streams if not provided
+   */
+  protected getIO(io?: IOContext): IOContext
+  {
+    return io ?? {
+      stdin: process.stdin,
+      stdout: process.stdout,
+      mode: 'interactive',
+    };
+  }
 
   /**
    Helper to create a success outcome

@@ -1,3 +1,4 @@
+import type { IOContext } from './IOContext';
 import { Op } from './Op.ts';
 import type { OutcomeOf } from './Outcome.ts';
 
@@ -16,7 +17,7 @@ export class PrintOp extends Op
     return `PrintOp(${this.message})`;
   }
 
-  async run()
+  async run(_io?: IOContext)
   {
     await Promise.resolve();
     try
@@ -104,7 +105,7 @@ export class FetchUserOp extends Op
     return `FetchUserOp(${this.userId})`;
   }
 
-  async run()
+  async run(_io?: IOContext)
   {
     await Promise.resolve();
     try
