@@ -1,6 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { assertNever } from '@axhxrx/assert-never';
 import { PrintOp } from './Op.examples';
-import { SelectFromListOp } from './SelectFromListOp';
+import { SelectFromListOp } from './SelectFromListOp.tsx';
 
 async function main(_args: Record<string, string>)
 {
@@ -26,13 +30,13 @@ async function main(_args: Record<string, string>)
   switch (selectedName)
   {
     case 'Clinton':
-      console.log('Clinton\n\n👎 You guessed wrong!\n\nGAME OVER');
+      console.log('\n\n👎 You guessed wrong!\n\nGAME OVER');
       break;
     case 'Trump':
-      console.log('💩💩💩💩💩\n\n🖕 What?! FUCK YOU, shitbird! Go eat a bag of 🍆🍆🍆\n\nGAME OVER');
+      console.log('\n\n🖕 What?! FUCK YOU, shitbird! Go eat a bag of 🍆🍆🍆\n\nGAME OVER');
       break;
     case 'Obama':
-      console.log('Obama\n\n🏆 That is CORRECT! You won the game.\n\nThank you for playing!');
+      console.log('\n\n🏆 That is CORRECT! You won the game.\n\nThank you for playing!');
       break;
     default:
       assertNever(selectedName);
