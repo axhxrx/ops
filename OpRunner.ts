@@ -16,6 +16,7 @@ export class OpRunner
 {
   private stack: Op[] = [];
   private io: IOContext;
+  private ioConfig: OpRunnerArgs;
   private startTime: number;
 
   constructor(
@@ -24,6 +25,7 @@ export class OpRunner
   )
   {
     this.stack = [initialOp];
+    this.ioConfig = ioConfig;
     this.io = createIOContext(ioConfig);
     this.startTime = Date.now();
   }
@@ -109,6 +111,12 @@ export class OpRunner
     console.log('[OpRunner] 🏁 Stack empty, execution complete!');
     console.log(`[OpRunner] ⏱️  Total time: ${totalDuration}ms`);
     console.log('');
+
+    // Save recorded session if in record mode
+    if (this.ioConfig.mode === 'record' && this.io.recordableStdin && this.ioConfig.sessionFile)
+    {
+      await this.io.recordableStdin.saveSession(this.ioConfig.sessionFile);
+    }
   }
 
   /**

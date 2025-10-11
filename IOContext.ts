@@ -1,4 +1,5 @@
 import type { OpRunnerArgs } from './args';
+import { RecordableStdin } from './RecordableStdin';
 import { TeeStream } from './TeeStream';
 
 /**
@@ -7,9 +8,11 @@ import { TeeStream } from './TeeStream';
  Allows switching between interactive, record, and replay modes
  */
 export type IOContext = {
-  stdin: NodeJS.ReadStream;
+  stdin: NodeJS.ReadStream | RecordableStdin;
   stdout: NodeJS.WriteStream | NodeJS.WritableStream;
   mode: 'interactive' | 'record' | 'replay';
+  // Optional: Keep reference to RecordableStdin for saving later
+  recordableStdin?: RecordableStdin;
 };
 
 /**
@@ -17,7 +20,7 @@ export type IOContext = {
 
  Handles:
  - Logging: If config.logFile is set, creates TeeStream to write to both console and file
- - TODO: Recording mode (RecordableStdin)
+ - Recording: If mode is 'record', creates RecordableStdin to capture input
  - TODO: Replay mode (ReplayableStdin)
 
  @param config - OpRunner configuration from arg parsing
@@ -25,6 +28,18 @@ export type IOContext = {
  */
 export function createIOContext(config: OpRunnerArgs): IOContext
 {
+  // Create stdin - use RecordableStdin if recording
+  let stdin: NodeJS.ReadStream | RecordableStdin = process.stdin;
+  let recordableStdin: RecordableStdin | undefined;
+
+  if (config.mode === 'record')
+  {
+    recordableStdin = new RecordableStdin();
+    // RecordableStdin is compatible with ReadStream (implements EventEmitter interface)
+    stdin = recordableStdin;
+    console.log(`[IOContext] 🔴 Recording input to: ${config.sessionFile}\n`);
+  }
+
   // Create stdout - use TeeStream if logging is enabled
   const stdout = config.logFile
     ? new TeeStream(config.logFile)
@@ -37,8 +52,9 @@ export function createIOContext(config: OpRunnerArgs): IOContext
   }
 
   return {
-    stdin: process.stdin,
+    stdin,
     stdout,
     mode: config.mode,
+    recordableStdin,
   };
 }
