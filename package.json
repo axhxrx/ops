@@ -1,0 +1,25 @@
+{
+  "name": "ops",
+  "private": true,
+  "devDependencies": {
+    "@eslint/js": "^9.37.0",
+    "@types/bun": "latest",
+    "globals": "^16.4.0",
+    "typescript-eslint": "^8.46.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "scripts": {
+    "check": "bun check:types && bun check:lint",
+    "check:types": "bunx tsc -p ./tsconfig.json --noEmit",
+    "check:lint": "bunx eslint --ext .ts ."
+  },
+  "dependencies": {
+    "@axhxrx/assert-never": "npm:@jsr/axhxrx__assert-never",
+    "@cliffy/prompt": "npm:@jsr/cliffy__prompt@1.0.0-rc.8",
+    "bun-promptx": "^0.2.0",
+    "eslint": "^9.37.0",
+    "jiti": "^2.6.1"
+  }
+}

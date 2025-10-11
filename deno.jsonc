@@ -1,6 +1,0 @@
-{
-  "name": "@axhxrx/ops",
-  "version": "0.0.1",
-  "exports": "./mod.ts",
-  "license": "MIT",
-}
