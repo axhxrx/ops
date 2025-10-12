@@ -60,7 +60,7 @@ export class PrintOp extends Op
     catch (error)
     {
       // Catch-all for unexpected errors
-      return this.unknownError(String(error));
+      return this.failWithUnknownError(String(error));
     }
   }
 }

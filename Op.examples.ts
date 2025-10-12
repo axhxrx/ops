@@ -98,7 +98,7 @@ export class FetchUserOp extends Op
     }
     catch (error)
     {
-      return this.unknownError(String(error));
+      return this.failWithUnknownError(String(error));
     }
   }
 }

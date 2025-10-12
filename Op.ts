@@ -42,8 +42,16 @@ export abstract class Op
   /**
    The error of last resort
    */
-  unknownError(debugData?: string): Failure<'unknownError'>
+  failWithUnknownError(debugData?: string): Failure<'unknownError'>
   {
     return { ok: false, failure: 'unknownError', debugData };
+  }
+
+  /**
+   This failure means that the operation was intentionally canceled by the user.
+   */
+  cancel(): Failure<'canceled'>
+  {
+    return { ok: false, failure: 'canceled' };
   }
 }
