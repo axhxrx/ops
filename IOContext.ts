@@ -1,5 +1,6 @@
 import type { OpRunnerArgs } from './args';
 import { RecordableStdin } from './RecordableStdin';
+import { ReplayableStdin } from './ReplayableStdin';
 import { TeeStream } from './TeeStream';
 
 /**
@@ -8,11 +9,13 @@ import { TeeStream } from './TeeStream';
  Allows switching between interactive, record, and replay modes
  */
 export type IOContext = {
-  stdin: NodeJS.ReadStream | RecordableStdin;
+  stdin: NodeJS.ReadStream | RecordableStdin | ReplayableStdin;
   stdout: NodeJS.WriteStream | NodeJS.WritableStream;
   mode: 'interactive' | 'record' | 'replay';
   // Optional: Keep reference to RecordableStdin for saving later
   recordableStdin?: RecordableStdin;
+  // Optional: Keep reference to ReplayableStdin for starting replay
+  replayableStdin?: ReplayableStdin;
 };
 
 /**
@@ -21,16 +24,17 @@ export type IOContext = {
  Handles:
  - Logging: If config.logFile is set, creates TeeStream to write to both console and file
  - Recording: If mode is 'record', creates RecordableStdin to capture input
- - TODO: Replay mode (ReplayableStdin)
+ - Replay: If mode is 'replay', creates ReplayableStdin to play back session
 
  @param config - OpRunner configuration from arg parsing
  @returns IOContext with appropriate streams
  */
-export function createIOContext(config: OpRunnerArgs): IOContext
+export async function createIOContext(config: OpRunnerArgs): Promise<IOContext>
 {
-  // Create stdin - use RecordableStdin if recording
-  let stdin: NodeJS.ReadStream | RecordableStdin = process.stdin;
+  // Create stdin - use RecordableStdin if recording, ReplayableStdin if replaying
+  let stdin: NodeJS.ReadStream | RecordableStdin | ReplayableStdin = process.stdin;
   let recordableStdin: RecordableStdin | undefined;
+  let replayableStdin: ReplayableStdin | undefined;
 
   if (config.mode === 'record')
   {
@@ -38,6 +42,16 @@ export function createIOContext(config: OpRunnerArgs): IOContext
     // RecordableStdin is compatible with ReadStream (implements EventEmitter interface)
     stdin = recordableStdin;
     console.log(`[IOContext] 🔴 Recording input to: ${config.sessionFile}\n`);
+  }
+  else if (config.mode === 'replay')
+  {
+    if (!config.sessionFile)
+    {
+      throw new Error('[IOContext] --replay requires a session file');
+    }
+    replayableStdin = await ReplayableStdin.create(config.sessionFile);
+    stdin = replayableStdin;
+    // ReplayableStdin will print its own status messages
   }
 
   // Create stdout - use TeeStream if logging is enabled
@@ -56,5 +70,6 @@ export function createIOContext(config: OpRunnerArgs): IOContext
     stdout,
     mode: config.mode,
     recordableStdin,
+    replayableStdin,
   };
 }

@@ -19,15 +19,25 @@ export class OpRunner
   private ioConfig: OpRunnerArgs;
   private startTime: number;
 
-  constructor(
+  private constructor(
     initialOp: Op,
     ioConfig: OpRunnerArgs,
+    io: IOContext,
   )
   {
     this.stack = [initialOp];
     this.ioConfig = ioConfig;
-    this.io = createIOContext(ioConfig);
+    this.io = io;
     this.startTime = Date.now();
+  }
+
+  /**
+   * Create an OpRunner instance (async because IO setup may be async)
+   */
+  static async create(initialOp: Op, ioConfig: OpRunnerArgs): Promise<OpRunner>
+  {
+    const io = await createIOContext(ioConfig);
+    return new OpRunner(initialOp, ioConfig, io);
   }
 
   /**
@@ -45,6 +55,13 @@ export class OpRunner
     console.log('[OpRunner] 🚀 Starting execution');
     console.log(`[OpRunner] Mode: ${this.io.mode}`);
     console.log('');
+
+    // Start replay if in replay mode
+    // Use a longer delay to ensure Ink has time to mount and attach listeners
+    if (this.ioConfig.mode === 'replay' && this.io.replayableStdin)
+    {
+      this.io.replayableStdin.startReplay(500); // 500ms delay
+    }
 
     while (this.stack.length > 0)
     {

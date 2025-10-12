@@ -7,8 +7,8 @@ async function main(args: { opRunner: OpRunnerArgs; app: Record<string, string> 
   // Create the initial op
   const initialOp = new WelcomeOp();
 
-  // Create the runner with the initial op and config
-  const runner = new OpRunner(initialOp, args.opRunner);
+  // Create the runner with the initial op and config (async!)
+  const runner = await OpRunner.create(initialOp, args.opRunner);
 
   // Run until the stack is empty!
   await runner.run();
