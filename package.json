@@ -27,6 +27,8 @@
     "ink-text-input": "^6.0.0",
     "install": "^0.13.0",
     "jiti": "^2.6.1",
+    "marked": "^16.4.0",
+    "marked-terminal": "^7.3.0",
     "react": "^19.2.0"
   }
 }
