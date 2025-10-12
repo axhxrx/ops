@@ -5,6 +5,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-floating-promises */
 import { Writable } from 'stream';
+import { stripAnsi } from './stripAnsi';
+
+/**
+ Options for TeeStream
+ */
+export type TeeStreamOptions = {
+  /**
+   Strip ANSI escape codes from log file output
+   Console output will still have colors/formatting
+   Default: false (preserve ANSI codes in log)
+   */
+  stripAnsi?: boolean;
+};
 
 /**
  A writable stream that writes to both console (stdout) and a log file
@@ -16,11 +29,13 @@ export class TeeStream extends Writable
 {
   private logWriter: ReturnType<typeof Bun.file> & { write: (chunk: string) => void };
   private logPath: string;
+  private options: TeeStreamOptions;
 
-  constructor(logPath: string)
+  constructor(logPath: string, options: TeeStreamOptions = {})
   {
     super();
     this.logPath = logPath;
+    this.options = options;
     // Bun.file().writer() returns a writable stream
     this.logWriter = Bun.file(logPath).writer() as any;
   }
@@ -37,7 +52,13 @@ export class TeeStream extends Writable
 
       // Write to log file with timestamp
       const timestamp = new Date().toISOString();
-      const text = chunk.toString();
+      let text = chunk.toString();
+
+      // Strip ANSI codes if requested
+      if (this.options.stripAnsi)
+      {
+        text = stripAnsi(text);
+      }
 
       // Only add timestamp at the start of new lines
       const lines = text.split('\n');
