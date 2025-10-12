@@ -1,4 +1,5 @@
 import type { IOContext } from './IOContext';
+import { createDefaultLogger } from './Logger';
 import type { Failure, Success } from './Outcome.ts';
 
 /**
@@ -18,7 +19,45 @@ export abstract class Op
       stdin: process.stdin,
       stdout: process.stdout,
       mode: 'interactive',
+      logger: createDefaultLogger(),
     };
+  }
+
+  /**
+   * Convenience method for logging from ops
+   * Uses the logger from IOContext, which respects the logging configuration
+   *
+   * @example
+   * ```typescript
+   * class MyOp extends Op {
+   *   async run(io?: IOContext) {
+   *     this.log(io, 'Starting operation...');
+   *     // ... do work ...
+   *     this.log(io, 'Operation complete');
+   *     return this.succeed(result);
+   *   }
+   * }
+   * ```
+   */
+  protected log(io: IOContext | undefined, message: string): void
+  {
+    this.getIO(io).logger.log(message);
+  }
+
+  /**
+   * Convenience method for warning from ops
+   */
+  protected warn(io: IOContext | undefined, message: string): void
+  {
+    this.getIO(io).logger.warn(message);
+  }
+
+  /**
+   * Convenience method for errors from ops
+   */
+  protected error(io: IOContext | undefined, message: string): void
+  {
+    this.getIO(io).logger.error(message);
   }
 
   /**
