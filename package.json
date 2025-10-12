@@ -12,7 +12,7 @@
   },
   "scripts": {
     "check": "bun check:types && bun check:lint",
-    "check:types": "bunx tsc -p ./tsconfig.json --noEmit",
+    "check:types": "bunx tsc -p ./tsconfig.json --noEmit && bunx tsc -p ./tsconfig.test.json --noEmit",
     "check:lint": "bunx eslint --ext .ts ."
   },
   "dependencies": {
