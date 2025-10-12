@@ -1,3 +1,5 @@
+#!/usr/bin/env bun
+
 import type { IOContext } from './IOContext';
 import { Op } from './Op';
 
@@ -62,5 +64,23 @@ export class PrintOp extends Op
       // Catch-all for unexpected errors
       return this.failWithUnknownError(String(error));
     }
+  }
+}
+
+if (import.meta.main)
+{
+  const op = new PrintOp('PrintOp can print to stdout! This is the proof! 💪\n');
+  const outcome1 = await op.run();
+  const outcome2 = await PrintOp.run(
+    'But it cannot print PROHIBITED words..',
+    ['PROHIBITED'],
+  );
+  if (outcome1.ok && !outcome2.ok && outcome2.failure === 'ProhibitedWord')
+  {
+    await PrintOp.run('Success! Exiting.');
+  }
+  else
+  {
+    throw new Error('Operation failed!');
   }
 }

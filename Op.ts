@@ -7,6 +7,21 @@ import type { Failure, Success } from './Outcome.ts';
  */
 export abstract class Op
 {
+  /**
+   The `static` variant of `run()` creates an instance of the op and runs it.
+
+   This type-fu avoids the `Cannot create an instance of an abstract class` error.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public static async run<ThisT extends new(...args: any[]) => Op>(
+    this: ThisT,
+    ...args: ConstructorParameters<ThisT>
+  )
+  {
+    const op = new this(...args);
+    return await op.run() as ReturnType<InstanceType<ThisT>['run']>;
+  }
+
   abstract name: string;
   abstract run(io?: IOContext): Promise<Success<unknown> | Failure<unknown>>;
 
