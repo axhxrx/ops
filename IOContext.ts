@@ -1,4 +1,5 @@
 import type { OpRunnerArgs } from './args';
+import { createDefaultLogger, type Logger } from './Logger';
 import { RecordableStdin } from './RecordableStdin';
 import { ReplayableStdin } from './ReplayableStdin';
 import { TeeStream } from './TeeStream';
@@ -12,6 +13,7 @@ export type IOContext = {
   stdin: NodeJS.ReadStream | RecordableStdin | ReplayableStdin;
   stdout: NodeJS.WriteStream | NodeJS.WritableStream;
   mode: 'interactive' | 'record' | 'replay';
+  logger: Logger;
   // Optional: Keep reference to RecordableStdin for saving later
   recordableStdin?: RecordableStdin;
   // Optional: Keep reference to ReplayableStdin for starting replay
@@ -65,10 +67,14 @@ export async function createIOContext(config: OpRunnerArgs): Promise<IOContext>
     console.log(`[IOContext] 📝 Logging to: ${config.logFile}\n`);
   }
 
+  // Create logger (simple for now, no namespace)
+  const logger = createDefaultLogger();
+
   return {
     stdin,
     stdout,
     mode: config.mode,
+    logger,
     recordableStdin,
     replayableStdin,
   };

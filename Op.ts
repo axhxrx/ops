@@ -48,7 +48,14 @@ export abstract class Op
   }
 
   /**
-   This failure means that the operation was intentionally canceled by the user.
+   Standard cancellation helper - use when user explicitly cancels an operation. That's just a somewhat special case of failure.
+
+   Not all ops should be cancelable; it should be configurable.
+
+   Common cancellation triggers:
+   - User presses Escape key in interactive components (opt-in via `cancelable` option)
+   - User sends interrupt signal (Ctrl+C is handled by framework)
+   - Operation times out (if implementing timeout logic)
    */
   cancel(): Failure<'canceled'>
   {
