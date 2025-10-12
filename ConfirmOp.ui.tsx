@@ -1,7 +1,7 @@
 import { Text, useInput } from 'ink';
 import TextInput from 'ink-text-input';
 import { useState } from 'react';
-import type { Logger } from '../../../../Logger';
+import type { Logger } from './Logger';
 
 /**
  Props for ConfirmInput component

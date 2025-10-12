@@ -1,6 +1,6 @@
 import { useInput } from 'ink';
 import InkSelectInput from 'ink-select-input';
-import type { Logger } from '../../../../Logger';
+import type { Logger } from './Logger';
 
 /**
  Props for SelectInput component

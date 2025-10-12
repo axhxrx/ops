@@ -1,7 +1,7 @@
 import { render } from 'ink';
 import type { IOContext } from './IOContext';
 import { Op } from './Op';
-import { TextInputComponent } from './src/ops/ui/components/TextInputComponent';
+import { TextInputComponent } from './InputTextOp.ui';
 
 /**
  Options for InputTextOp

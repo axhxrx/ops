@@ -1,7 +1,7 @@
 import { render } from 'ink';
 import type { IOContext } from './IOContext';
 import { Op } from './Op';
-import { SelectInput } from './src/ops/ui/components/SelectInput';
+import { SelectInput } from './SelectFromListOp.ui';
 
 /**
  Options for SelectFromListOp
