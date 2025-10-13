@@ -19,7 +19,6 @@ import { FilePreviewOp } from './FilePreviewOp';
 import type { IOContext } from './IOContext';
 import { Op } from './Op';
 import { OpRunner } from './OpRunner';
-import type { Failure, Success } from './Outcome';
 import { SelectFromListOp } from './SelectFromListOp';
 
 /**
@@ -29,7 +28,7 @@ class MainMenuOp extends Op
 {
   name = 'MainMenuOp';
 
-  async run(io?: IOContext): Promise<Success<Op> | Failure<'menuFailed' | 'unknownError'>>
+  async run(io?: IOContext)
   {
     await Promise.resolve();
     this.log(io, 'Displaying main menu');
@@ -54,13 +53,22 @@ class MainMenuOp extends Op
     switch (outcome.value)
     {
       case 'File Operations':
-        return this.succeed(new FileOperationsMenuOp());
+        return this.handleOutcome(
+          new FileOperationsMenuOp(),
+          (outcome) => !outcome.ok && outcome.failure === 'canceled',
+        );
 
       case 'Settings':
-        return this.succeed(new SettingsMenuOp());
+        return this.handleOutcome(
+          new SettingsMenuOp(),
+          (outcome) => !outcome.ok && outcome.failure === 'canceled',
+        );
 
       case 'Help':
-        return this.succeed(new HelpOp());
+        return this.handleOutcome(
+          new HelpOp(),
+          (outcome) => !outcome.ok && outcome.failure === 'canceled',
+        );
 
       case 'Exit':
         return this.succeed(new ExitOp());
@@ -82,7 +90,7 @@ class FileOperationsMenuOp extends Op
 {
   name = 'FileOperationsMenuOp';
 
-  async run(io?: IOContext): Promise<Success<Op> | Failure<'menuFailed' | 'unknownError'>>
+  async run(io?: IOContext)
   {
     await Promise.resolve();
     this.log(io, 'Displaying file operations menu');
@@ -100,7 +108,7 @@ class FileOperationsMenuOp extends Op
     if (!outcome.ok)
     {
       // User pressed Escape - go back to main menu
-      return this.succeed(new MainMenuOp());
+      return this.cancel();
     }
 
     // Route to appropriate action
@@ -116,7 +124,7 @@ class FileOperationsMenuOp extends Op
         return this.succeed(new PreviewFileOp('./README_DOES_NOT_EXIST.md'));
 
       case 'Back to Main Menu':
-        return this.succeed(new MainMenuOp());
+        return this.cancel();
 
       default:
       {
@@ -152,7 +160,7 @@ class SettingsMenuOp extends Op
     if (!outcome.ok)
     {
       // User pressed Escape - go back to main menu
-      return this.succeed(new MainMenuOp());
+      return this.cancel();
     }
 
     // Handle settings actions
@@ -168,7 +176,7 @@ class SettingsMenuOp extends Op
         return this.succeed(new SettingChangedOp('Cache cleared!'));
 
       case 'Back to Main Menu':
-        return this.succeed(new MainMenuOp());
+        return this.cancel();
 
       default:
       {
@@ -252,7 +260,7 @@ class PreviewFileOp extends Op
     }
 
     // Return to file operations menu
-    return this.succeed(new FileOperationsMenuOp());
+    return this.cancel();
   }
 }
 
@@ -342,7 +350,7 @@ class HelpOp extends Op
       return this.failWithUnknownError('Help display did not complete');
     }
 
-    return this.succeed(new MainMenuOp());
+    return this.cancel();
   }
 }
 

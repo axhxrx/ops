@@ -1,6 +1,6 @@
 import type { IOContext } from './IOContext';
 import { createDefaultLogger } from './Logger';
-import type { Failure, Success } from './Outcome.ts';
+import type { Failure, OpWithHandler, OutcomeHandler, Success } from './Outcome.ts';
 
 /**
  Abstract base class for ops.
@@ -77,10 +77,65 @@ export abstract class Op
 
   /**
    Helper to create a success outcome
+
+   @param value - The success value
    */
   succeed<T>(value: T): Success<T>
   {
     return { ok: true, value };
+  }
+
+  /**
+   Helper to wrap a child Op with an outcome handler
+
+   The handler receives the child's outcome and returns:
+   - true: Re-run the parent Op
+   - false: Normal completion (pop both parent and child)
+   - Op: Replace child with the returned Op (keep parent waiting)
+
+   This enables flexible control flow without circular dependencies. The parent can inspect both success and failure outcomes of the child and decide what to do next.
+
+   @param op - The child Op to run
+   @param handler - Function that receives child's outcome and decides what to do
+
+   @example
+   ```typescript
+   // Re-run parent when child is canceled
+   return this.handleOutcome(
+     new FileOperationsMenuOp(),
+     (outcome) => !outcome.ok && outcome.failure === 'canceled'
+   );
+
+   // Re-run parent on any failure
+   return this.handleOutcome(
+     new SomeOp(),
+     (outcome) => !outcome.ok
+   );
+
+   // Re-run parent on success
+   return this.handleOutcome(
+     new ConfirmOp('Try again?'),
+     (outcome) => outcome.ok && outcome.value === true
+   );
+
+   // Route to different ops based on outcome
+   return this.handleOutcome(
+     new SelectFromListOp(['A', 'B', 'Back']),
+     (outcome) => {
+       if (!outcome.ok) return true; // re-run on cancel
+       if (outcome.value === 'Back') return true;
+       if (outcome.value === 'A') return new OpA();
+       return new OpB();
+     }
+   );
+   ```
+   */
+  protected handleOutcome<OpT extends Op>(
+    op: OpT,
+    handler: OutcomeHandler<OpT>,
+  ): Success<OpWithHandler<OpT>>
+  {
+    return this.succeed({ op, handler });
   }
 
   /**

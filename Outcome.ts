@@ -37,3 +37,49 @@ export type Outcome<SuccessT, FailureT> =
  type MyOutcome = OutcomeOf<typeof myOp>
  */
 export type OutcomeOf<T extends Op> = Awaited<ReturnType<T['run']>>;
+
+/**
+ Handler function that receives a child Op's outcome and decides what to do
+
+ Return values:
+ - true: Re-run the parent Op
+ - false: Normal completion (pop both parent and child)
+ - Op: Replace child with the returned Op (keep parent waiting)
+
+ @example
+ ```typescript
+ // Re-run parent on cancel
+ (outcome) => !outcome.ok && outcome.failure === 'canceled'
+
+ // Re-run parent on any failure
+ (outcome) => !outcome.ok
+
+ // Re-run parent on success
+ (outcome) => outcome.ok
+
+ // Route to different op based on outcome
+ (outcome) => {
+   if (!outcome.ok) return true; // re-run on failure
+   if (outcome.value === 'A') return new OpA();
+   return new OpB();
+ }
+ ```
+ */
+export type OutcomeHandler<OpT extends Op> = (outcome: OutcomeOf<OpT>) => boolean | Op;
+
+/**
+ Wrapper that pairs an Op with an outcome handler
+
+ When a parent Op returns this type, OpRunner will:
+ 1. PUSH the child op (not replace)
+ 2. Keep the parent on the stack
+ 3. After child completes, call the handler with child's outcome
+ 4. Use handler's return value to decide what to do next
+
+ This enables flexible control flow without circular dependencies.
+ */
+export interface OpWithHandler<OpT extends Op>
+{
+  op: OpT;
+  handler: OutcomeHandler<OpT>;
+}

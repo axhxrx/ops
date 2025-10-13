@@ -33,11 +33,11 @@ if (outcome.ok) {
 bun FilePreviewOp.tsx
 ```
 
-### 2. Hierarchical Menu Pattern
+### 2. Hierarchical Menu Pattern with Outcome Handlers
 
-The key insight: **Each menu level is just an Op that returns the next Op.**
+The key insight: **Each menu level is just an Op that uses outcome handlers to manage navigation.**
 
-This makes menu hierarchies incredibly simple:
+This makes menu hierarchies incredibly simple WITHOUT circular dependencies:
 
 ```typescript
 class MainMenuOp extends Op {
@@ -48,12 +48,18 @@ class MainMenuOp extends Op {
 
     if (!outcome.ok) return this.fail('menuFailed' as const);
 
-    // Simply return the next Op based on selection!
+    // Use handleOutcome() to specify what happens when child completes
     switch (outcome.value) {
       case 'Submenu A':
-        return this.succeed(new SubmenuAOp());
+        return this.handleOutcome(
+          new SubmenuAOp(),
+          (outcome) => !outcome.ok && outcome.failure === 'canceled'
+        );
       case 'Submenu B':
-        return this.succeed(new SubmenuBOp());
+        return this.handleOutcome(
+          new SubmenuBOp(),
+          (outcome) => !outcome.ok && outcome.failure === 'canceled'
+        );
       case 'Exit':
         return this.succeed(undefined); // Exit
     }
@@ -66,9 +72,9 @@ class SubmenuAOp extends Op {
     const selectOp = new SelectFromListOp(options, { cancelable: true });
     const outcome = await selectOp.run(io);
 
-    // Escape key or "Back" returns to parent menu
+    // Escape key or "Back" cancels - parent will catch it
     if (!outcome.ok || outcome.value === 'Back') {
-      return this.succeed(new MainMenuOp());
+      return this.cancel();
     }
 
     // Handle actions...
@@ -81,6 +87,55 @@ class SubmenuAOp extends Op {
   }
 }
 ```
+
+**Key Difference:**
+- Submenu **cancels** instead of returning parent menu
+- Parent **handles the cancel** by re-running itself
+- No circular dependencies! Child doesn't know about parent
+
+### 3. Outcome Handlers: Flexible Control Flow
+
+Outcome handlers let you inspect a child Op's outcome (success OR failure) and decide what to do:
+
+```typescript
+return this.handleOutcome(
+  new ChildOp(),
+  (outcome) => {
+    // Return value decides what happens next:
+    // - true: Re-run parent
+    // - false: Pop both parent and child (done)
+    // - Op: Replace child with this Op
+  }
+);
+```
+
+**Common Patterns:**
+
+```typescript
+// Re-run parent on cancel (menu navigation)
+(outcome) => !outcome.ok && outcome.failure === 'canceled'
+
+// Re-run parent on any failure
+(outcome) => !outcome.ok
+
+// Re-run parent on success
+(outcome) => outcome.ok
+
+// Route to different ops based on value
+(outcome) => {
+  if (!outcome.ok) return true; // re-run on failure
+  if (outcome.value === 'A') return new OpA();
+  if (outcome.value === 'B') return new OpB();
+  return false; // done
+}
+```
+
+**Why This is Better:**
+- ✅ No circular dependencies
+- ✅ Child doesn't need to know about parent
+- ✅ Type-safe - handler receives strongly-typed outcome
+- ✅ Flexible - can handle success, failure, or specific cases
+- ✅ Composable - create reusable handler patterns
 
 ## Demo: Interactive Menu System
 
@@ -407,10 +462,12 @@ This would follow the same pattern - just another Op that returns other Ops base
 ## Key Takeaways
 
 1. **Menus are just Ops** that return other Ops
-2. **Navigation is handled by returning the next Op** to run
-3. **Escape key + "Back" option** provide intuitive navigation
-4. **FilePreviewOp** makes file confirmation EASY
-5. **The pattern scales** - add more menus by adding more Ops
-6. **Always use Ink for user input** - don't touch stdin directly
+2. **Use outcome handlers** for navigation - no circular dependencies!
+3. **Child Ops cancel** to go back, parent handles the cancel
+4. **Escape key + "Back" option** provide intuitive navigation
+5. **FilePreviewOp** makes file preview EASY
+6. **FetchOp** makes API integration EASY
+7. **The pattern scales** - add more menus by adding more Ops
+8. **Always use Ink for user input** - don't touch stdin directly
 
-The Ops Pattern's stack-based execution naturally supports hierarchical navigation!
+The Ops Pattern's stack-based execution with outcome handlers naturally supports hierarchical navigation!

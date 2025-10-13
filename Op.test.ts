@@ -56,15 +56,15 @@ test('PrintOp - ProhibitedWord failure', async () =>
 test('PrintOp - MessageTooLong failure', async () =>
 {
   const longMessage = 'a'.repeat(101);
-  const op = new PrintOp(longMessage, []);
+  const op = new PrintOp(longMessage, { maxLength: 100 });
   const outcome = await op.run();
 
   if (!outcome.ok)
   {
     // assertEquals(outcome.failure, 'MessageTooLong');
     expect(outcome.failure).toBe('MessageTooLong');
-    // assertEquals(outcome.debugData, `Length: ${longMessage.length}`);
-    expect(outcome.debugData).toBe(`Length: ${longMessage.length}`);
+    // assertEquals(outcome.debugData, `Length: ${longMessage.length}, Max: 100`);
+    expect(outcome.debugData).toBe(`Length: ${longMessage.length}, Max: 100`);
   }
   else
   {
