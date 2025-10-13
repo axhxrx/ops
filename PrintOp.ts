@@ -4,6 +4,23 @@ import type { IOContext } from './IOContext';
 import { Op } from './Op';
 
 /**
+ * Options for PrintOp
+ */
+export interface PrintOpOptions
+{
+  /**
+   * Optional list of prohibited words. If message contains any of these, fails with 'ProhibitedWord'
+   */
+  prohibitedWords?: string[];
+
+  /**
+   * Optional maximum message length. If specified and message exceeds this, fails with 'MessageTooLong'
+   * Default: no limit
+   */
+  maxLength?: number;
+}
+
+/**
  PrintOp - Prints a message to stdout
 
  This op respects the IOContext, so output will be captured in logs/replays.
@@ -15,18 +32,36 @@ import { Op } from './Op';
 
  Example:
  ```ts
+ // Simple print (no limits)
  const op = new PrintOp('Hello, world!');
  await op.run(ioContext);
+
+ // With validation
+ const op2 = new PrintOp('Hello', {
+   prohibitedWords: ['bad', 'evil'],
+   maxLength: 1000
+ });
  ```
  */
 export class PrintOp extends Op
 {
+  private options: PrintOpOptions;
+
   constructor(
     private message: string,
-    private prohibitedWords?: string[],
+    options?: PrintOpOptions | string[], // Backward compat: string[] = prohibitedWords
   )
   {
     super();
+    // Backward compatibility: if options is an array, treat it as prohibitedWords
+    if (Array.isArray(options))
+    {
+      this.options = { prohibitedWords: options };
+    }
+    else
+    {
+      this.options = options ?? {};
+    }
   }
 
   get name(): string
@@ -42,17 +77,17 @@ export class PrintOp extends Op
     try
     {
       // Check for prohibited words
-      if (this.prohibitedWords?.some((word) => this.message.includes(word)))
+      if (this.options.prohibitedWords?.some((word) => this.message.includes(word)))
       {
         // The 'as const' is CRITICAL - it preserves the literal type 'ProhibitedWord'
         return this.fail('ProhibitedWord' as const, `Message: ${this.message}`);
       }
 
-      // Check message length
-      if (this.message.length > 100)
+      // Check message length (only if maxLength is specified)
+      if (this.options.maxLength !== undefined && this.message.length > this.options.maxLength)
       {
         // Another literal type preserved with 'as const'
-        return this.fail('MessageTooLong' as const, `Length: ${this.message.length}`);
+        return this.fail('MessageTooLong' as const, `Length: ${this.message.length}, Max: ${this.options.maxLength}`);
       }
 
       // Success path - write to stdout (respects TeeStream!)
@@ -69,15 +104,39 @@ export class PrintOp extends Op
 
 if (import.meta.main)
 {
-  const op = new PrintOp('PrintOp can print to stdout! This is the proof! 💪\n');
-  const outcome1 = await op.run();
+  console.log('🎬 PrintOp Demo\n');
+
+  // Test 1: Simple print (no limits)
+  console.log('Test 1: Simple print');
+  const op1 = new PrintOp('PrintOp can print to stdout! This is the proof! 💪\n');
+  const outcome1 = await op1.run();
+
+  // Test 2: Prohibited words (backward compat - array syntax)
+  console.log('\nTest 2: Prohibited words validation');
   const outcome2 = await PrintOp.run(
     'But it cannot print PROHIBITED words..',
     ['PROHIBITED'],
   );
-  if (outcome1.ok && !outcome2.ok && outcome2.failure === 'ProhibitedWord')
+
+  // Test 3: Max length validation
+  console.log('\nTest 3: Max length validation');
+  const longText = 'a'.repeat(150);
+  const outcome3 = await PrintOp.run(longText, { maxLength: 100 });
+
+  // Test 4: Long text with no limit (new default behavior)
+  console.log('\nTest 4: Long text with no limit');
+  const longHelpText = 'This is a really long help text that would have failed before, but now PrintOp has no default length limit! '.repeat(3);
+  const outcome4 = await PrintOp.run(longHelpText + '\n');
+
+  // Verify results
+  if (
+    outcome1.ok
+    && !outcome2.ok && outcome2.failure === 'ProhibitedWord'
+    && !outcome3.ok && outcome3.failure === 'MessageTooLong'
+    && outcome4.ok
+  )
   {
-    await PrintOp.run('Success! Exiting.');
+    await PrintOp.run('\n✅ All tests passed! PrintOp now has no default length limit.\n');
   }
   else
   {

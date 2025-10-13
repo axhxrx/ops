@@ -71,7 +71,11 @@ export const SelectInput = <T extends string>({
     }
   });
 
-  const items = options.map((option) => ({ label: option, value: option }));
+  const items = options.map((option, index) => ({
+    label: option,
+    value: option,
+    key: `${option}-${index}`,
+  }));
 
   const handleSelect = (item: { label: string; value: string }) =>
   {
