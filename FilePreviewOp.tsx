@@ -92,7 +92,8 @@ export class FilePreviewOp extends Op
         // If it's a text encoding error, fail with notUtf8Text
         if (error && typeof error === 'object' && 'code' in error)
         {
-          return this.fail('notUtf8Text' as const, String(error));
+          const errorMessage = 'message' in error ? String(error.message) : 'Text encoding error';
+          return this.fail('notUtf8Text' as const, errorMessage);
         }
         throw error;
       }
@@ -202,7 +203,7 @@ if (import.meta.main)
   // If user provided a file path, preview that file
   if (args.length > 0)
   {
-    const filePath = args[0];
+    const filePath = args[0]!;
     console.log(`📄 Previewing: ${filePath}\n`);
 
     const op = new FilePreviewOp(filePath);

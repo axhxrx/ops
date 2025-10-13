@@ -2,54 +2,54 @@ import { Box, Text, useInput } from 'ink';
 import type { Logger } from './Logger';
 
 /**
- * Props for FilePreview component
+ Props for FilePreview component
  */
 export interface FilePreviewProps
 {
   /**
-   * File path to display
+   File path to display
    */
   filePath: string;
 
   /**
-   * File content to display
+   File content to display
    */
   content: string;
 
   /**
-   * File extension (e.g., '.json', '.txt')
+   File extension (e.g., '.json', '.txt')
    */
   extension: string;
 
   /**
-   * Callback when user presses any key to dismiss
+   Callback when user presses any key to dismiss
    */
   onDone: () => void;
 
   /**
-   * Optional logger for debug output
+   Optional logger for debug output
    */
   logger?: Logger;
 }
 
 /**
- * FilePreview - Display file content with appropriate formatting
- *
- * Features:
- * - Pretty-prints JSON with indentation
- * - Shows file path as header
- * - Press any key to dismiss
- * - Syntax highlighting for JSON (color coding)
- *
- * @example
- * ```tsx
- * <FilePreview
- *   filePath="./config.json"
- *   content={fileContent}
- *   extension=".json"
- *   onDone={() => console.log('User dismissed')}
- * />
- * ```
+ FilePreview - Display file content with appropriate formatting
+
+ Features:
+ - Pretty-prints JSON with indentation
+ - Shows file path as header
+ - Press any key to dismiss
+ - Syntax highlighting for JSON (color coding)
+
+ @example
+ ```tsx
+ <FilePreview
+   filePath="./config.json"
+   content={fileContent}
+   extension=".json"
+   onDone={() => console.log('User dismissed')}
+ />
+ ```
  */
 export const FilePreview = ({
   filePath,
@@ -80,10 +80,10 @@ export const FilePreview = ({
   {
     try
     {
-      const parsed = JSON.parse(content);
+      const parsed: unknown = JSON.parse(content);
       formattedContent = JSON.stringify(parsed, null, 2);
     }
-    catch (jsonError)
+    catch (_jsonError)
     {
       error = 'Invalid JSON format - displaying as-is';
     }

@@ -255,6 +255,145 @@ You can write directly to stdout for:
 
 **Golden Rule:** If it needs to wait for a keypress, use an Ink component with `useInput`.
 
+## API Integration with FetchOp
+
+**FetchOp** makes HTTP requests fit naturally into the Ops Pattern. Every API call is an Op!
+
+### Simple API Calls
+
+```typescript
+class FetchUserDataOp extends Op {
+  constructor(private username: string) {
+    super();
+  }
+
+  async run(io?: IOContext) {
+    const fetchOp = FetchOp.getJson(`https://api.github.com/users/${this.username}`);
+    const result = await fetchOp.run(io);
+
+    if (!result.ok) {
+      if (result.failure === 'httpError') {
+        return this.fail('userNotFound' as const, this.username);
+      }
+      return this.fail('apiFailed' as const, result.failure);
+    }
+
+    // Display user data in a menu or preview
+    const displayOp = new DisplayUserOp(result.value.data);
+    return this.succeed(displayOp);
+  }
+}
+```
+
+### Menu with API Integration
+
+```typescript
+class ApiDemoMenuOp extends Op {
+  async run(io?: IOContext) {
+    const options = [
+      'Fetch GitHub User',
+      'Post to API',
+      'Check API Status',
+      'Back'
+    ] as const;
+
+    const selectOp = new SelectFromListOp(options, { cancelable: true });
+    const outcome = await selectOp.run(io);
+
+    if (!outcome.ok) return this.succeed(new MainMenuOp());
+
+    switch (outcome.value) {
+      case 'Fetch GitHub User':
+        // Get username from user input
+        const inputOp = new InputTextOp('Enter GitHub username:');
+        const inputResult = await inputOp.run(io);
+
+        if (inputResult.ok) {
+          return this.succeed(new FetchUserDataOp(inputResult.value));
+        }
+        return this.succeed(new ApiDemoMenuOp());
+
+      case 'Post to API':
+        return this.succeed(new PostToApiOp());
+
+      case 'Check API Status':
+        return this.succeed(new CheckApiStatusOp());
+
+      case 'Back':
+        return this.succeed(new MainMenuOp());
+    }
+  }
+}
+```
+
+### Error Handling Pattern
+
+```typescript
+class FetchWithRetryOp extends Op {
+  async run(io?: IOContext) {
+    const maxRetries = 3;
+    let lastError: string | null = null;
+
+    for (let i = 0; i < maxRetries; i++) {
+      const fetchOp = FetchOp.getJson('https://api.example.com/data');
+      const result = await fetchOp.run(io);
+
+      if (result.ok) {
+        return this.succeed(result.value.data);
+      }
+
+      lastError = result.failure;
+
+      // Don't retry client errors (4xx)
+      if (result.failure === 'httpError' && result.debugData?.includes('4')) {
+        break;
+      }
+
+      // Wait before retrying
+      await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+    }
+
+    return this.fail('fetchFailed' as const, lastError || 'Unknown error');
+  }
+}
+```
+
+### Composing Multiple API Calls
+
+```typescript
+class FetchUserAndReposOp extends Op {
+  constructor(private username: string) {
+    super();
+  }
+
+  async run(io?: IOContext) {
+    // Fetch user data
+    const userOp = FetchOp.getJson(`https://api.github.com/users/${this.username}`);
+    const userResult = await userOp.run(io);
+
+    if (!userResult.ok) {
+      return this.fail('userFetchFailed' as const, userResult.failure);
+    }
+
+    // Fetch user's repos
+    const reposOp = FetchOp.getJson(`https://api.github.com/users/${this.username}/repos`);
+    const reposResult = await reposOp.run(io);
+
+    if (!reposResult.ok) {
+      return this.fail('reposFetchFailed' as const, reposResult.failure);
+    }
+
+    // Combine and display
+    const combined = {
+      user: userResult.value.data,
+      repos: reposResult.value.data,
+    };
+
+    return this.succeed(new DisplayUserWithReposOp(combined));
+  }
+}
+```
+
 ## Next Steps: File Browser
 
 The natural next step would be a **FileSystemBrowserOp** that lets you:

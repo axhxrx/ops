@@ -12,15 +12,15 @@
  Run with: bun MenuDemo.tsx
  */
 
+import { render } from 'ink';
+import { Text, useInput } from 'ink';
 import { parseOpRunnerArgs } from './args';
+import { FilePreviewOp } from './FilePreviewOp';
 import type { IOContext } from './IOContext';
 import { Op } from './Op';
 import { OpRunner } from './OpRunner';
+import type { Failure, Success } from './Outcome';
 import { SelectFromListOp } from './SelectFromListOp';
-import { FilePreviewOp } from './FilePreviewOp';
-import { PrintOp } from './PrintOp';
-import { render } from 'ink';
-import { Text, useInput } from 'ink';
 
 /**
  Entry point op - shows the main menu
@@ -29,7 +29,7 @@ class MainMenuOp extends Op
 {
   name = 'MainMenuOp';
 
-  async run(io?: IOContext)
+  async run(io?: IOContext): Promise<Success<Op> | Failure<'menuFailed' | 'unknownError'>>
   {
     await Promise.resolve();
     this.log(io, 'Displaying main menu');
@@ -66,11 +66,11 @@ class MainMenuOp extends Op
         return this.succeed(new ExitOp());
 
       default:
-        {
-          // TypeScript knows this is unreachable due to exhaustiveness checking
-          const _exhaustive: never = outcome.value;
-          return this.failWithUnknownError(`Unknown option: ${String(_exhaustive)}`);
-        }
+      {
+        // TypeScript knows this is unreachable due to exhaustiveness checking
+        const _exhaustive: never = outcome.value;
+        return this.failWithUnknownError(`Unknown option: ${String(_exhaustive)}`);
+      }
     }
   }
 }
@@ -82,7 +82,7 @@ class FileOperationsMenuOp extends Op
 {
   name = 'FileOperationsMenuOp';
 
-  async run(io?: IOContext)
+  async run(io?: IOContext): Promise<Success<Op> | Failure<'menuFailed' | 'unknownError'>>
   {
     await Promise.resolve();
     this.log(io, 'Displaying file operations menu');
@@ -119,10 +119,10 @@ class FileOperationsMenuOp extends Op
         return this.succeed(new MainMenuOp());
 
       default:
-        {
-          const _exhaustive: never = outcome.value;
-          return this.failWithUnknownError(`Unknown option: ${String(_exhaustive)}`);
-        }
+      {
+        const _exhaustive: never = outcome.value;
+        return this.failWithUnknownError(`Unknown option: ${String(_exhaustive)}`);
+      }
     }
   }
 }
@@ -171,10 +171,10 @@ class SettingsMenuOp extends Op
         return this.succeed(new MainMenuOp());
 
       default:
-        {
-          const _exhaustive: never = outcome.value;
-          return this.failWithUnknownError(`Unknown option: ${String(_exhaustive)}`);
-        }
+      {
+        const _exhaustive: never = outcome.value;
+        return this.failWithUnknownError(`Unknown option: ${String(_exhaustive)}`);
+      }
     }
   }
 }
@@ -227,9 +227,13 @@ class PreviewFileOp extends Op
       {
         errorMessage = `File not found: ${outcome.debugData}`;
       }
-      else if (outcome.failure === 'unsupportedFormat')
+      else if (outcome.failure === 'fileTooLarge')
       {
-        errorMessage = `Unsupported format: ${outcome.debugData}`;
+        errorMessage = `File too large: ${outcome.debugData}`;
+      }
+      else if (outcome.failure === 'notUtf8Text')
+      {
+        errorMessage = `Not UTF-8 text: ${outcome.debugData}`;
       }
       else if (outcome.failure === 'readError')
       {
@@ -317,16 +321,14 @@ class HelpOp extends Op
 {
   name = 'HelpOp';
 
-  async run(io?: IOContext)
+  async run(_io?: IOContext)
   {
-    const ioContext = this.getIO(io);
     let done = false;
 
     const { unmount, waitUntilExit } = render(
       <HelpDisplay
         onDone={() =>
         {
-          this.log(io, 'Help dismissed');
           done = true;
           unmount();
         }}
