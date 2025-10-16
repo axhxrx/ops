@@ -41,7 +41,7 @@ export class OpRunner
   /**
    * Create an OpRunner instance (async because IO setup may be async)
    */
-  static async create(initialOp: Op, ioConfig: OpRunnerArgs): Promise<OpRunner>
+  static async create(initialOp: Op, ioConfig: OpRunnerArgs = {mode: "interactive"}): Promise<OpRunner>
   {
     const io = await createIOContext(ioConfig);
     return new OpRunner(initialOp, ioConfig, io);

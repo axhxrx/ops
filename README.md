@@ -174,6 +174,86 @@ class MainMenuOp extends Op {
 
 **No circular dependencies!** Child cancels, parent handles it.
 
+### Configuration Management
+
+Store app settings, preferences, and state using config ops:
+
+```typescript
+import { setConfigNamespace } from './ConfigContext';
+import { ReadConfigOp, WriteConfigOp } from './ops';
+
+// Set namespace once at app startup
+setConfigNamespace('my-app');
+
+// Write config
+const writeOp = new WriteConfigOp('ui-language', 'en-US');
+await writeOp.run();
+// Writes to ~/.config/my-app/ui-language.jsonctc
+
+// Read config with default
+const readOp = new ReadConfigOp<string>('ui-language', {
+  defaultValue: 'en-US'
+});
+const result = await readOp.run();
+if (result.ok) {
+  console.log(`Language: ${result.value}`);
+}
+
+// Store arrays (e.g., recent URLs)
+const urlsWrite = new WriteConfigOp('recent-urls', [
+  'https://example.com',
+  'https://api.github.com'
+]);
+```
+
+**Smart location resolution:**
+1. Walks up from CWD looking for `.config/<namespace>/`
+2. Stops at volume boundary
+3. Falls back to `~/.config/<namespace>/`
+
+**Per-component namespaces:**
+```typescript
+// Library components can have their own config
+const pickerOp = new ReadConfigOp('last-directory', {
+  namespace: 'com.axhxrx.ops.filepicker'
+});
+```
+
+### JSONCTC: Preserving Your Comments
+
+Config files use **JSONCTC** format (JSON with Comments and Trailing Commas). The killer feature: **WriteConfigOp preserves your comments** when updating values.
+
+**Why this matters:**
+- Config files are human-editable
+- Users document their choices with comments
+- Apps shouldn't destroy user documentation
+
+**Example:**
+```typescript
+// User creates ~/.config/my-app/theme.jsonctc with comments:
+// {
+//   // I prefer dark mode at night
+//   "mode": "dark",
+//   "contrast": "high",  // easier on my eyes
+// }
+
+// App updates the value:
+const op = new WriteConfigOp('theme', {
+  mode: 'light',
+  contrast: 'high'
+});
+await op.run();
+
+// Result preserves comments!
+// {
+//   // I prefer dark mode at night  ← PRESERVED!
+//   "mode": "light",
+//   "contrast": "high",  // easier on my eyes  ← PRESERVED!
+// }
+```
+
+See [JSONCTC.md](./JSONCTC.md) for the full story.
+
 ### Strong Typing with `as const`
 
 ```typescript
@@ -206,6 +286,11 @@ if (!result.ok) {
 
 ### Network
 - **FetchOp** - HTTP requests with smart previews (JSON, HTML→markdown)
+
+### Configuration
+- **ReadConfigOp** - Read config from nearest `.config/` directory
+- **WriteConfigOp** - Write config with atomic writes
+- **ConfigContext** - Set global namespace for your app
 
 ### Composition
 - **MenuDemo** - Full example of hierarchical menus
@@ -242,6 +327,8 @@ bun OutcomeHandlerTest.tsx    # Outcome handler patterns
 bun FilePreviewOp.tsx         # File previews
 bun FetchOp.tsx               # HTTP requests
 bun FetchOp.tsx <url>         # Fetch and preview any URL
+bun ReadConfigOp.ts <key>     # Read config value
+bun WriteConfigOp.ts <key> <value>  # Write config value
 ```
 
 ## Key Features
