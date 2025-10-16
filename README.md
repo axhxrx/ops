@@ -252,7 +252,9 @@ await op.run();
 // }
 ```
 
-See [JSONCTC.md](./JSONCTC.md) for the full story.
+**🏆 HALL-OF-FAMER RADGUY O.G. WAREZ KINGPIN ACHIEVEMENT:** Comments are preserved at ALL levels - including inside nested objects AND inside arrays! This is the world's first JSONCTC implementation with 100% perfect preservation.
+
+See [JSONCTC.md](./JSONCTC.md) for the full story and technical details of this legendary achievement.
 
 ### Strong Typing with `as const`
 

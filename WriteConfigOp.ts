@@ -3,13 +3,12 @@
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import type { IOContext } from './IOContext';
-import { Op } from './Op';
-import type { Failure, Success } from './Outcome';
 import { getConfigNamespace, sanitizeKey, sanitizeNamespace } from './ConfigContext';
+import { FileWriteOp } from './FileWriteOp';
+import type { IOContext } from './IOContext';
 import { JSONCTCObject } from './JSONCTCObject';
 import { JSONCTCReadFileOp } from './JSONCTCReadFileOp';
-import { FileWriteOp } from './FileWriteOp';
+import { Op } from './Op';
 
 /**
  Options for writing config
@@ -82,10 +81,7 @@ export class WriteConfigOp<T = unknown> extends Op
     super();
   }
 
-  async run(io?: IOContext): Promise<
-    | Success<string> // Returns path where written
-    | Failure<'accessDenied' | 'readError' | 'writeError' | 'fileNotFound'>
-  >
+  async run(io?: IOContext)
   {
     await Promise.resolve();
 
@@ -116,23 +112,30 @@ export class WriteConfigOp<T = unknown> extends Op
 
       if (isPlainObject(this.value) && isPlainObject(existingData))
       {
-        // Both are plain objects - update properties individually to preserve comments
+        // Both are plain objects - RECURSIVELY update to preserve nested comments!
         jsonctcObj = existingObj;
+        this.recursivelyUpdateProperties(jsonctcObj.data, this.value);
+      }
+      else if (Array.isArray(this.value) && Array.isArray(existingData))
+      {
+        // Both are arrays - update element-by-element to preserve comments!
+        jsonctcObj = existingObj;
+        const newArray = this.value as unknown[];
+        const oldArray = existingData as unknown[];
 
-        // Update/add properties from new value
-        for (const [k, v] of Object.entries(this.value))
+        // Update each element
+        const maxLen = Math.max(newArray.length, oldArray.length);
+        for (let i = 0; i < maxLen; i++)
         {
-          (jsonctcObj.data as Record<string, unknown>)[k] = v;
-        }
-
-        // Remove properties not in new value
-        const existingKeys = Object.keys(existingData);
-        const newKeys = Object.keys(this.value);
-        for (const k of existingKeys)
-        {
-          if (!newKeys.includes(k))
+          if (i < newArray.length)
           {
-            delete (jsonctcObj.data as Record<string, unknown>)[k];
+            // Set the element (will trigger our monkeypatch!)
+            (jsonctcObj.data as any)[String(i)] = newArray[i];
+          }
+          else
+          {
+            // Delete extra elements
+            delete (jsonctcObj.data as any)[String(i)];
           }
         }
       }
@@ -140,7 +143,7 @@ export class WriteConfigOp<T = unknown> extends Op
       {
         // Type mismatch (object → array, array → object, etc.)
         // Replace entire value - can't preserve comments in this case
-        // For primitives or arrays, stringify then wrap
+        // For primitives, stringify then wrap
         const pretty = this.options?.pretty ?? true;
         const jsonText = pretty
           ? JSON.stringify(this.value, null, 2) + '\n'
@@ -174,6 +177,59 @@ export class WriteConfigOp<T = unknown> extends Op
     }
 
     return this.succeed(writeResult.value);
+  }
+
+  /**
+   * Recursively update properties in a JSONCTCObject from a plain object
+   *
+   * This preserves nested comments by updating properties individually
+   * instead of replacing entire nested objects.
+   *
+   * @param target - The JSONCTCObject's .data proxy to update
+   * @param source - The plain object with new values
+   */
+  private recursivelyUpdateProperties(
+    target: any,  // eslint-disable-line @typescript-eslint/no-explicit-any
+    source: Record<string, unknown>
+  ): void
+  {
+    // Helper to check if value is a plain object (not array, not null)
+    const isPlainObject = (val: unknown): val is Record<string, unknown> =>
+      val !== null &&
+      typeof val === 'object' &&
+      !Array.isArray(val) &&
+      val.constructor === Object;
+
+    // Get keys from both target and source
+    const sourceKeys = Object.keys(source);
+    const targetKeys = Object.keys(target);
+
+    // Update or add properties from source
+    for (const key of sourceKeys)
+    {
+      const sourceValue = source[key];
+      const targetValue = target[key];
+
+      // If BOTH are plain objects, recurse!
+      if (isPlainObject(sourceValue) && isPlainObject(targetValue))
+      {
+        this.recursivelyUpdateProperties(targetValue, sourceValue);
+      }
+      else
+      {
+        // Otherwise, just set the value (primitive or type mismatch)
+        target[key] = sourceValue;
+      }
+    }
+
+    // Delete properties that exist in target but not in source
+    for (const key of targetKeys)
+    {
+      if (!sourceKeys.includes(key))
+      {
+        delete target[key];
+      }
+    }
   }
 
   /**

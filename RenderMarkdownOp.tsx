@@ -1,7 +1,14 @@
 import { render } from 'ink';
+import { marked } from 'marked';
+// @ts-expect-error - marked-terminal has runtime named export but no TS declarations
+import { markedTerminal } from 'marked-terminal';
 import type { IOContext } from './IOContext';
 import { Op } from './Op';
 import { MarkdownRenderer } from './RenderMarkdownOp.ui';
+
+// Configure marked to use terminal renderer (once, at module level)
+// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
+marked.use(markedTerminal({ emoji: true, width: 80, reflowText: true, unescape: true }) as any);
 
 /**
  RenderMarkdownOp - Display markdown content beautifully in the terminal
@@ -39,7 +46,7 @@ export class RenderMarkdownOp extends Op
 {
   name = 'RenderMarkdownOp';
 
-  constructor(private content: string)
+  constructor(private content: string, private waitForKeyPress: boolean = true)
   {
     super();
   }
@@ -49,6 +56,15 @@ export class RenderMarkdownOp extends Op
     await Promise.resolve();
     const ioContext = this.getIO(io);
 
+    // If we don't need to wait for keypress, just print the markdown directly
+    if (!this.waitForKeyPress)
+    {
+      const formattedOutput = marked(this.content) as string;
+      console.log(formattedOutput);
+      return this.succeed(undefined);
+    }
+
+    // Interactive mode: render with React/Ink and wait for keypress
     let done = false;
 
     const { unmount, waitUntilExit } = render(
