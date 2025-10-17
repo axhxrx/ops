@@ -25,6 +25,7 @@
     "@jsr/axhxrx__assert-never": "^0.2.1",
     "@jsr/cliffy__prompt": "1.0.0-rc.8",
     "bun-promptx": "^0.2.0",
+    "dedent": "^1.7.0",
     "eslint": "^9.37.0",
     "ink": "^6.3.1",
     "ink-confirm-input": "^2.0.0",

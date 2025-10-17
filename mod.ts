@@ -1,4 +1,8 @@
 // Main exports for @axhxrx/ops
+import dedent from 'dedent';
+/** `ded` is just a re-export of `dedent` from `dedent` (for historical reaso*/
+export { dedent as ded };
+
 export { ConfirmOp } from './ConfirmOp';
 export { ResultOp, SelectNameOp, WelcomeOp } from './GameOps';
 export { InputTextOp } from './InputTextOp';
