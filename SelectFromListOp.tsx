@@ -1,3 +1,5 @@
+#!/usr/bin/env bun
+
 import { render } from 'ink';
 import type { IOContext } from './IOContext';
 import { Op } from './Op';
@@ -26,6 +28,12 @@ export type RichOption = {
    Whether key matching is case-sensitive (default: false)
    */
   caseSensitive?: boolean;
+
+  /**
+   Optional help text displayed when this option is highlighted.
+   Shown in a fixed-height area below the options list.
+   */
+  helpText?: string;
 };
 
 /**
@@ -72,18 +80,30 @@ export type SelectFromListOpOptions = {
  }
  ```
 
- @example Rich options with keyboard shortcuts
+ @example Rich options with keyboard shortcuts and help text
  ```typescript
  const options = [
-   {title: '[A]ctivate', key: 'a'},
-   {title: '[D]isable', key: 'd'},
-   {title: '[Q]uit', key: 'q'}
+   {
+     title: '[A]ctivate',
+     key: 'a',
+     helpText: 'This action cannot be undone!'
+   },
+   {
+     title: '[D]isable',
+     key: 'd',
+     helpText: 'Temporarily disable the feature.'
+   },
+   {
+     title: '[Q]uit',
+     key: 'q'
+   }
  ] as const;
  const op = new SelectFromListOp(options);
  const result = await op.run();
 
  if (result.ok) {
    // User can press 'a', 'd', or 'q' or use arrow keys + Enter
+   // Help text appears below options as user navigates
    // result.value is the selected option object
    console.log('Selected:', result.value.title);
  }
@@ -173,21 +193,39 @@ if (import.meta.main)
 
   console.log('\n---\n');
 
-  // Example 2: Rich options with keyboard shortcuts
-  console.log('Example 2: Rich options with keyboard shortcuts');
-  console.log('Try pressing A, D, S, or Q to select directly!\n');
+  // Example 2: Rich options with keyboard shortcuts and help text
+  console.log('Example 2: Rich options with keyboard shortcuts and help text');
+  console.log('Navigate with arrows to see help text change. Press A, D, S, or Q to select!\n');
   const richOptions = [
-    { title: '[A]ctivate feature', key: 'a' },
-    { title: '[D]isable feature', key: 'd' },
-    { title: '[S]how status', key: 's' },
-    { title: '[Q]uit', key: 'q' },
+    {
+      title: '[A]ctivate feature',
+      key: 'a',
+      helpText: 'Choosing this option cannot be undone, and may cause you to lose money.\nProceed with caution!',
+    },
+    {
+      title: '[D]isable feature',
+      key: 'd',
+      helpText: 'This will temporarily disable the feature. You can re-enable it later.',
+    },
+    {
+      title: '[S]how status',
+      key: 's',
+      helpText: 'Display the current status of all features without making any changes.',
+    },
+    {
+      title: '[Q]uit',
+      key: 'q',
+      helpText: 'Exit the program immediately.',
+    },
   ] as const;
   const op2 = new SelectFromListOp(richOptions);
   const outcome2 = await op2.run();
 
   if (outcome2.ok)
   {
-    console.log('✅ Selected:', outcome2.value.title);
+    const selected = outcome2.value;
+    const display = typeof selected === 'string' ? selected : (selected as RichOption).title;
+    console.log('✅ Selected:', display);
   }
   else if (outcome2.failure === 'canceled')
   {
@@ -200,20 +238,35 @@ if (import.meta.main)
 
   console.log('\n---\n');
 
-  // Example 3: Mixed keys with case sensitivity
-  console.log('Example 3: Case-sensitive shortcuts');
-  console.log('Try uppercase I (case-sensitive) vs lowercase v (case-insensitive)!\n');
+  // Example 3: Mixed help text (some options have help, some don't)
+  console.log('Example 3: Mixed help text and case-sensitive shortcuts');
+  console.log('Notice how the help area maintains fixed height even when some options lack help text!\n');
   const caseSensitiveOptions = [
-    { title: '[I]mportant (case-sensitive)', key: 'I', caseSensitive: true },
-    { title: '[V]iew logs', key: 'v' },
-    { title: '[E]xit', key: 'e' },
+    {
+      title: '[I]mportant (case-sensitive)',
+      key: 'I',
+      caseSensitive: true,
+      helpText: 'Only uppercase "I" will select this option (case-sensitive).',
+    },
+    {
+      title: '[V]iew logs',
+      key: 'v',
+      // No help text for this option - the help area will show empty space
+    },
+    {
+      title: '[E]xit',
+      key: 'e',
+      helpText: 'Both "e" and "E" will work (case-insensitive by default).',
+    },
   ] as const;
   const op3 = new SelectFromListOp(caseSensitiveOptions);
   const outcome3 = await op3.run();
 
   if (outcome3.ok)
   {
-    console.log('✅ Selected:', outcome3.value.title);
+    const selected = outcome3.value;
+    const display = typeof selected === 'string' ? selected : (selected as RichOption).title;
+    console.log('✅ Selected:', display);
   }
   else
   {

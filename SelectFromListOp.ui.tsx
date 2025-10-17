@@ -1,4 +1,5 @@
-import { useInput } from 'ink';
+import { useState } from 'react';
+import { Box, Text, useInput } from 'ink';
 import InkSelectInput from 'ink-select-input';
 import type { Logger } from './Logger';
 import type { SelectOption } from './SelectFromListOp';
@@ -44,6 +45,8 @@ export interface SelectInputProps<T extends SelectOption>
  - Press Enter to select
  - Press Escape to cancel (if onCancel provided)
  - Press shortcut keys to instantly select (if options have keys defined)
+ - Display contextual help text below the options (if provided)
+ - Help text area maintains fixed height to prevent UI jumping
  - Type-safe: returns one of the provided options
 
  @example Simple strings
@@ -56,12 +59,23 @@ export interface SelectInputProps<T extends SelectOption>
  />
  ```
 
- @example Rich options with keyboard shortcuts
+ @example Rich options with keyboard shortcuts and help text
  ```tsx
  const options = [
-   {title: '[A]ctivate', key: 'a'},
-   {title: '[D]isable', key: 'd'},
-   {title: '[S]omething else', key: 's'}
+   {
+     title: '[A]ctivate',
+     key: 'a',
+     helpText: 'This action cannot be undone!'
+   },
+   {
+     title: '[D]isable',
+     key: 'd',
+     helpText: 'Temporarily disable the feature.'
+   },
+   {
+     title: '[S]omething else',
+     key: 's'
+   }
  ] as const;
  <SelectInput
    options={options}
@@ -80,11 +94,33 @@ export const SelectInput = <T extends SelectOption>({
   // Track if we've already handled selection to prevent double-submission
   let answered = false;
 
+  // Track the currently highlighted item index
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
+
   // Helper to get display label from option
   const getOptionLabel = (option: T): string =>
   {
     return typeof option === 'string' ? option : option.title;
   };
+
+  // Helper to get help text from option
+  const getOptionHelpText = (option: T): string | undefined =>
+  {
+    return typeof option === 'string' ? undefined : option.helpText;
+  };
+
+  // Calculate the maximum number of lines needed for help text
+  // This ensures the help area has a fixed height and doesn't jump around
+  const maxHelpTextLines = options.reduce((max, option) =>
+  {
+    const helpText = getOptionHelpText(option);
+    if (!helpText) return max;
+    const lines = helpText.split('\n').length;
+    return Math.max(max, lines);
+  }, 0);
+
+  // Get the current help text to display
+  const currentHelpText = getOptionHelpText(options[highlightedIndex]!);
 
   // Build keyboard shortcut maps
   // We use two maps: one for exact (case-sensitive) matches, one for case-insensitive
@@ -125,15 +161,17 @@ export const SelectInput = <T extends SelectOption>({
   const findOptionByKey = (input: string): T | undefined =>
   {
     // First try exact match (for case-sensitive keys)
-    if (exactMap.has(input))
+    const exactMatch = exactMap.get(input);
+    if (exactMatch !== undefined)
     {
-      return exactMap.get(input);
+      return exactMatch;
     }
     // Then try case-insensitive match
     const lowerInput = input.toLowerCase();
-    if (caseInsensitiveMap.has(lowerInput))
+    const caseInsensitiveMatch = caseInsensitiveMap.get(lowerInput);
+    if (caseInsensitiveMatch !== undefined)
     {
-      return caseInsensitiveMap.get(lowerInput);
+      return caseInsensitiveMatch;
     }
     return undefined;
   };
@@ -150,8 +188,21 @@ export const SelectInput = <T extends SelectOption>({
       return;
     }
 
-    // Don't process keys that InkSelectInput handles (arrows, enter)
-    if (key.upArrow || key.downArrow || key.return)
+    // Handle arrow keys to update highlighted index
+    if (key.upArrow && !answered)
+    {
+      setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : options.length - 1));
+      return;
+    }
+
+    if (key.downArrow && !answered)
+    {
+      setHighlightedIndex((prev) => (prev < options.length - 1 ? prev + 1 : 0));
+      return;
+    }
+
+    // Don't process enter - let InkSelectInput handle it
+    if (key.return)
     {
       return;
     }
@@ -192,5 +243,40 @@ export const SelectInput = <T extends SelectOption>({
     }
   };
 
-  return <InkSelectInput items={items} onSelect={handleSelect} />;
+  // Render help text area with fixed height
+  const renderHelpText = () =>
+  {
+    if (maxHelpTextLines === 0)
+    {
+      // No help text in any option, don't render the help area
+      return null;
+    }
+
+    // Calculate how many lines to display
+    const currentLines = currentHelpText ? currentHelpText.split('\n') : [];
+    const paddingLines = maxHelpTextLines - currentLines.length;
+
+    return (
+      <Box flexDirection="column" marginTop={1}>
+        {currentHelpText && (
+          <Text dimColor>{currentHelpText}</Text>
+        )}
+        {/* Add empty lines to maintain fixed height */}
+        {Array.from({ length: paddingLines }).map((_, i) => (
+          <Text key={`padding-${i}`}>{' '}</Text>
+        ))}
+      </Box>
+    );
+  };
+
+  return (
+    <Box flexDirection="column">
+      <InkSelectInput
+        items={items}
+        onSelect={handleSelect}
+        initialIndex={highlightedIndex}
+      />
+      {renderHelpText()}
+    </Box>
+  );
 };
