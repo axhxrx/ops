@@ -13,11 +13,13 @@ export type SimpleOption = string;
 /**
  Rich option with keyboard shortcut support
  */
-export type RichOption = {
+export type RichOption<ValueT> = {
   /**
    Display text for the option
    */
   title: string;
+
+  value?: ValueT;
 
   /**
    Keyboard shortcut(s) to select this option. Can be a single key or an array of keys.
@@ -39,7 +41,7 @@ export type RichOption = {
 /**
  Union type for all supported option formats
  */
-export type SelectOption = SimpleOption | RichOption;
+export type SelectOption = SimpleOption | RichOption<unknown>;
 
 /**
  Options for SelectFromListOp
@@ -155,18 +157,18 @@ export class SelectFromListOp<OptionsT extends readonly SelectOption[]> extends 
     await waitUntilExit();
 
     // Handle the three possible outcomes
-    if (answer === null)
-    {
-      return this.failWithUnknownError('No selection made');
-    }
-
     if (answer === 'canceled')
     {
       return this.cancel();
     }
 
-    // TypeScript now knows answer is SuccessT here!
-    return this.succeed(answer);
+    if (answer === null)
+    {
+      return this.failWithUnknownError('No selection made');
+    }
+
+    // TypeScript doen't knows answer is SuccessT here, because it can't track values through callbacks. :-/
+    return this.succeed(answer as SuccessT);
   }
 }
 
@@ -224,7 +226,7 @@ if (import.meta.main)
   if (outcome2.ok)
   {
     const selected = outcome2.value;
-    const display = typeof selected === 'string' ? selected : (selected as RichOption).title;
+    const display = typeof selected === 'string' ? selected : (selected as RichOption<unknown>).title;
     console.log('✅ Selected:', display);
   }
   else if (outcome2.failure === 'canceled')
@@ -265,7 +267,7 @@ if (import.meta.main)
   if (outcome3.ok)
   {
     const selected = outcome3.value;
-    const display = typeof selected === 'string' ? selected : (selected as RichOption).title;
+    const display = typeof selected === 'string' ? selected : (selected as RichOption<unknown>).title;
     console.log('✅ Selected:', display);
   }
   else
