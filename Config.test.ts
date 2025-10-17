@@ -1,7 +1,7 @@
+import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { getConfigNamespace, resetConfigContext, setConfigNamespace } from './ConfigContext';
 import { ReadConfigOp } from './ReadConfigOp';
 import { WriteConfigOp } from './WriteConfigOp';
@@ -503,6 +503,7 @@ describe('JSONCTC Comment Preservation', () =>
       const content = fs.readFileSync(writeResult.value, 'utf-8');
 
       // Should be valid JSON that can be parsed
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       expect(() => JSON.parse(content)).not.toThrow();
 
       // Should contain our data

@@ -256,6 +256,70 @@ await op.run();
 
 See [JSONCTC.md](./JSONCTC.md) for the full story and technical details of this legendary achievement.
 
+### Type-Safe Data Access with `extract()` and `update()`
+
+The `JSONCTCObject` class provides type-safe methods for reading and writing data without ESLint warnings!
+
+**Problem: `.data` is untyped (returns `any`)**
+```typescript
+const obj = new JSONCTCObject(jsonStr);
+const config = obj.data.options.subsystem.config;
+//            ^^^ ESLint: unsafe member access (x3!)
+```
+
+**Solution: Use `extract()` for type-safe reads**
+```typescript
+interface MyConfig {
+  hypersonicDrive: { energyUsageLimit: number }
+}
+
+const defaultConfig: MyConfig = {
+  hypersonicDrive: { energyUsageLimit: 5000 }
+};
+
+const obj = new JSONCTCObject(jsonStr);
+const config = obj.extract('options.subsystem.config', defaultConfig);
+//    ^^ TypeScript infers MyConfig from defaultValue!
+
+config.hypersonicDrive.energyUsageLimit;  // Fully typed, no warnings!
+```
+
+**How `extract()` works:**
+- Navigate to path (supports `'a.b.c'` or `['a', 'b', 'c']`)
+- If missing/wrong type → returns default value
+- If both are objects → deep merges (config overrides defaults)
+- Type inference from default value (no explicit generics needed!)
+
+**Use `update()` for type-safe writes**
+```typescript
+obj.update('options.subsystem.config.energyUsageLimit', 9000);
+//    ^^ Type-safe! Comments preserved!
+
+console.log(obj.toString());  // Comments still there!
+```
+
+**Round-trip example:**
+```typescript
+// Extract with defaults
+const config = obj.extract('server', {
+  timeout: 5000,
+  retries: 3
+});
+
+// Modify
+config.timeout = 10000;
+
+// Update back (preserves comments!)
+obj.update('server', config);
+```
+
+**Benefits:**
+- ✅ Type-safe (TypeScript infers from defaults)
+- ✅ No ESLint warnings
+- ✅ Comments preserved on update
+- ✅ Graceful degradation (missing values filled from default)
+- ✅ Works with deep nesting
+
 ### Strong Typing with `as const`
 
 ```typescript

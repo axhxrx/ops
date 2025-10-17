@@ -104,6 +104,7 @@ export class WriteConfigOp<T = unknown> extends Op
     {
       // File exists - preserve comments by updating properties individually
       const existingObj = readResult.value;
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Intentional: .data returns any (dynamic proxy)
       const existingData = existingObj.data;
 
       // Check if both old and new values are plain objects (not arrays)
@@ -130,12 +131,14 @@ export class WriteConfigOp<T = unknown> extends Op
           if (i < newArray.length)
           {
             // Set the element (will trigger our monkeypatch!)
-            (jsonctcObj.data as any)[String(i)] = newArray[i];
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Intentional: array element access on dynamic proxy
+            jsonctcObj.data[String(i)] = newArray[i];
           }
           else
           {
             // Delete extra elements
-            delete (jsonctcObj.data as any)[String(i)];
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Intentional: array element access on dynamic proxy
+            delete jsonctcObj.data[String(i)];
           }
         }
       }
@@ -193,6 +196,9 @@ export class WriteConfigOp<T = unknown> extends Op
     source: Record<string, unknown>
   ): void
   {
+    // NOTE: This function intentionally works with 'any' (the dynamic proxy from JSONCTCObject.data)
+    // We use type guards to safely navigate the structure, but ESLint doesn't understand this pattern.
+
     // Helper to check if value is a plain object (not array, not null)
     const isPlainObject = (val: unknown): val is Record<string, unknown> =>
       val !== null &&
@@ -202,12 +208,14 @@ export class WriteConfigOp<T = unknown> extends Op
 
     // Get keys from both target and source
     const sourceKeys = Object.keys(source);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- Intentional: target is dynamic proxy
     const targetKeys = Object.keys(target);
 
     // Update or add properties from source
     for (const key of sourceKeys)
     {
       const sourceValue = source[key];
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- Intentional: dynamic proxy access
       const targetValue = target[key];
 
       // If BOTH are plain objects, recurse!
@@ -218,6 +226,7 @@ export class WriteConfigOp<T = unknown> extends Op
       else
       {
         // Otherwise, just set the value (primitive or type mismatch)
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Intentional: dynamic proxy mutation
         target[key] = sourceValue;
       }
     }
@@ -227,6 +236,7 @@ export class WriteConfigOp<T = unknown> extends Op
     {
       if (!sourceKeys.includes(key))
       {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Intentional: dynamic proxy mutation
         delete target[key];
       }
     }

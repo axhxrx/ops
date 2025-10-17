@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { describe, expect, test } from 'bun:test';
 import { JSONCTCObject } from './JSONCTCObject';
 
@@ -513,6 +517,347 @@ describe('JSONCTCObject', () =>
       expect(keys).toContain('name');
       expect(keys).toContain('city');
       expect(keys).not.toContain('age');
+    });
+  });
+
+  describe('extract() - Type-safe data extraction', () =>
+  {
+    test('extract existing value at simple path', () =>
+    {
+      const obj = new JSONCTCObject({ name: 'Alice', age: 30 });
+      const result = obj.extract('name', 'default');
+
+      expect(result).toBe('Alice');
+    });
+
+    test('extract existing value at nested path (dot notation)', () =>
+    {
+      const obj = new JSONCTCObject({
+        user: { name: 'Alice', profile: { city: 'NYC' } },
+      });
+      const result = obj.extract('user.profile.city', 'default');
+
+      expect(result).toBe('NYC');
+    });
+
+    test('extract existing value at nested path (array notation)', () =>
+    {
+      const obj = new JSONCTCObject({
+        user: { name: 'Alice', profile: { city: 'NYC' } },
+      });
+      const result = obj.extract(['user', 'profile', 'city'], 'default');
+
+      expect(result).toBe('NYC');
+    });
+
+    test('extract missing path returns default', () =>
+    {
+      const obj = new JSONCTCObject({ name: 'Alice' });
+      const result = obj.extract('email', 'noemail@example.com');
+
+      expect(result).toBe('noemail@example.com');
+    });
+
+    test('extract from non-existent nested path returns default', () =>
+    {
+      const obj = new JSONCTCObject({ name: 'Alice' });
+      const result = obj.extract('user.profile.city', 'NYC');
+
+      expect(result).toBe('NYC');
+    });
+
+    test('extract with type mismatch returns default', () =>
+    {
+      const obj = new JSONCTCObject({ name: 'Alice', count: 42 });
+      // Expecting string but count is number
+      const result = obj.extract('count', 'default');
+
+      expect(result).toBe('default');
+    });
+
+    test('extract object - deep merges with default', () =>
+    {
+      const obj = new JSONCTCObject({
+        config: {
+          theme: 'dark',
+          fontSize: 14,
+        },
+      });
+
+      const defaultConfig = {
+        theme: 'light',
+        fontSize: 12,
+        fontFamily: 'Arial',
+      };
+
+      const result = obj.extract('config', defaultConfig);
+
+      // Properties from file override default
+      expect(result.theme).toBe('dark');
+      expect(result.fontSize).toBe(14);
+      // Missing property comes from default
+      expect(result.fontFamily).toBe('Arial');
+    });
+
+    test('extract nested object - deep merges recursively', () =>
+    {
+      const obj = new JSONCTCObject({
+        app: {
+          ui: {
+            theme: 'dark',
+          },
+          network: {
+            timeout: 5000,
+          },
+        },
+      });
+
+      const defaultConfig = {
+        ui: {
+          theme: 'light',
+          fontSize: 12,
+        },
+        network: {
+          timeout: 3000,
+          retries: 3,
+        },
+      };
+
+      const result = obj.extract('app', defaultConfig);
+
+      // Deep merged!
+      expect(result.ui.theme).toBe('dark');
+      expect(result.ui.fontSize).toBe(12); // From default
+      expect(result.network.timeout).toBe(5000);
+      expect(result.network.retries).toBe(3); // From default
+    });
+
+    test('extract array returns array (no merge)', () =>
+    {
+      const obj = new JSONCTCObject({
+        tags: ['typescript', 'javascript'],
+      });
+
+      const result = obj.extract('tags', ['default']);
+
+      expect(result).toEqual(['typescript', 'javascript']);
+      expect(result).not.toEqual(['default']);
+    });
+
+    test('extract primitive from nested path', () =>
+    {
+      const obj = new JSONCTCObject({
+        settings: {
+          volume: 75,
+        },
+      });
+
+      const result = obj.extract('settings.volume', 50);
+
+      expect(result).toBe(75);
+    });
+
+    test('extract preserves type inference', () =>
+    {
+      interface Config
+      {
+        host: string;
+        port: number;
+      }
+
+      const obj = new JSONCTCObject({
+        server: { host: 'localhost', port: 8080 },
+      });
+
+      const defaultConfig: Config = { host: '0.0.0.0', port: 3000 };
+      const result = obj.extract('server', defaultConfig);
+
+      // TypeScript should infer result as Config
+      const host: string = result.host;
+      const port: number = result.port;
+
+      expect(host).toBe('localhost');
+      expect(port).toBe(8080);
+    });
+  });
+
+  describe('update() - Type-safe data updates', () =>
+  {
+    test('update existing property at simple path', () =>
+    {
+      const obj = new JSONCTCObject({ name: 'Alice', age: 30 });
+      obj.update('name', 'Bob');
+
+      expect(obj.data.name).toBe('Bob');
+      expect(obj.data.age).toBe(30);
+    });
+
+    test('update existing property at nested path (dot notation)', () =>
+    {
+      const obj = new JSONCTCObject({
+        user: { name: 'Alice', profile: { city: 'NYC' } },
+      });
+
+      obj.update('user.profile.city', 'SF');
+
+      expect(obj.data.user.profile.city).toBe('SF');
+      expect(obj.data.user.name).toBe('Alice');
+    });
+
+    test('update existing property at nested path (array notation)', () =>
+    {
+      const obj = new JSONCTCObject({
+        user: { name: 'Alice', profile: { city: 'NYC' } },
+      });
+
+      obj.update(['user', 'profile', 'city'], 'LA');
+
+      expect(obj.data.user.profile.city).toBe('LA');
+    });
+
+    test('update creates intermediate objects', () =>
+    {
+      const obj = new JSONCTCObject({ name: 'Alice' });
+      obj.update('user.profile.city', 'NYC');
+
+      expect(obj.data.user.profile.city).toBe('NYC');
+      expect(obj.data.name).toBe('Alice');
+    });
+
+    test('update deeply nested path creates all intermediate objects', () =>
+    {
+      const obj = new JSONCTCObject({});
+      obj.update('a.b.c.d.e', 'deep');
+
+      expect(obj.data.a.b.c.d.e).toBe('deep');
+    });
+
+    test('update with number value', () =>
+    {
+      const obj = new JSONCTCObject({ count: 0 });
+      obj.update('count', 42);
+
+      expect(obj.data.count).toBe(42);
+    });
+
+    test('update with boolean value', () =>
+    {
+      const obj = new JSONCTCObject({ active: false });
+      obj.update('active', true);
+
+      expect(obj.data.active).toBe(true);
+    });
+
+    test('update with object value', () =>
+    {
+      const obj = new JSONCTCObject({ user: { name: 'Alice' } });
+      obj.update('user', { name: 'Bob', age: 30 });
+
+      expect(obj.data.user.name).toBe('Bob');
+      expect(obj.data.user.age).toBe(30);
+    });
+
+    test('update with array value', () =>
+    {
+      const obj = new JSONCTCObject({ tags: ['old'] });
+      obj.update('tags', ['new', 'tags']);
+
+      expect(obj.data.tags).toEqual(['new', 'tags']);
+    });
+
+    test('update preserves comments in toString()', () =>
+    {
+      const jsonStr = `{
+  // User name
+  "name": "Alice",
+  // User age
+  "age": 30
+}`;
+      const obj = new JSONCTCObject(jsonStr);
+
+      obj.update('name', 'Bob');
+
+      const output = obj.toString();
+
+      expect(output).toContain('// User name');
+      expect(output).toContain('// User age');
+      expect(output).toContain('Bob');
+    });
+
+    test('update nested path preserves comments', () =>
+    {
+      const jsonStr = `{
+  // Configuration
+  "config": {
+    // Theme setting
+    "theme": "light"
+  }
+}`;
+      const obj = new JSONCTCObject(jsonStr);
+
+      obj.update('config.theme', 'dark');
+
+      const output = obj.toString();
+
+      expect(output).toContain('// Configuration');
+      expect(output).toContain('// Theme setting');
+      expect(output).toContain('dark');
+    });
+
+    test('update multiple paths independently', () =>
+    {
+      const obj = new JSONCTCObject({
+        a: { value: 1 },
+        b: { value: 2 },
+      });
+
+      obj.update('a.value', 10);
+      obj.update('b.value', 20);
+
+      expect(obj.data.a.value).toBe(10);
+      expect(obj.data.b.value).toBe(20);
+    });
+
+    test('update throws on empty path', () =>
+    {
+      const obj = new JSONCTCObject({ name: 'Alice' });
+
+      expect(() => obj.update([], 'value')).toThrow('Cannot update root');
+      expect(() => obj.update('', 'value')).toThrow('Cannot update root');
+    });
+
+    test('update throws when parent is not an object', () =>
+    {
+      const obj = new JSONCTCObject({ name: 'Alice' });
+
+      // Trying to set a property on a string value
+      expect(() => obj.update('name.nested', 'value')).toThrow('parent is not an object');
+    });
+
+    test('update works with extract for round-trip', () =>
+    {
+      interface Config
+      {
+        timeout: number;
+        retries: number;
+      }
+
+      const obj = new JSONCTCObject({
+        server: { timeout: 3000, retries: 3 },
+      });
+
+      const defaultConfig: Config = { timeout: 5000, retries: 5 };
+      const config = obj.extract('server', defaultConfig);
+
+      // Modify extracted value
+      config.timeout = 10000;
+
+      // Update back
+      obj.update('server', config);
+
+      // Verify
+      expect(obj.data.server.timeout).toBe(10000);
+      expect(obj.data.server.retries).toBe(3);
     });
   });
 });

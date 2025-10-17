@@ -18,6 +18,7 @@ function modify(
   path: (string | number)[],
   value: unknown,
   options?: { formattingOptions?: FormattingOptions; getInsertionIndex?: () => number; isArrayInsertion?: boolean }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Intentional: returns jsonc-parser edit objects (array of any)
 ): any[]
 {
   // Check if path contains array indices (numbers OR numeric strings!)
@@ -29,7 +30,7 @@ function modify(
   if (!hasArrayIndex)
   {
     // No array indices - use original modify()
-    return originalModify(text, path, value, options);
+    return originalModify(text, path, value, options ?? {});
   }
 
   // MONKEYPATCH MAGIC: Handle array element modification manually!
@@ -50,7 +51,7 @@ function modify(
   if (arrayPathIndex === -1)
   {
     // Shouldn't happen, but fallback
-    return originalModify(text, path, value, options);
+    return originalModify(text, path, value, options ?? {});
   }
 
   // Split path: everything before array index, and the array index itself
@@ -65,13 +66,18 @@ function modify(
   {
     // TODO: Handle nested paths inside array elements
     // For now, fall back to replacing whole array
-    return originalModify(text, pathToArray, value, options);
+    return originalModify(text, pathToArray, value, options ?? {});
   }
 
   // ULTIMATE RADGUY WAREZ KINGPIN TEXT SURGERY!
   // Use parseTree to get exact byte positions of array elements
 
   const tree = parseTree(text);
+  if (!tree)
+  {
+    return [];
+  }
+
   const arrayNode = findNodeAtLocation(tree, pathToArray);
 
   if (!arrayNode || arrayNode.type !== 'array' || !arrayNode.children)
@@ -87,26 +93,34 @@ function modify(
   {
     // Element doesn't exist yet - would need to add it
     // For now, fall back to replacing whole array
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Intentional: parse() returns unknown JSON structure
     const parsed = parse(text);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any -- Intentional: navigating unknown parsed JSON structure
     let current: any = parsed;
     for (const segment of pathToArray)
     {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- Intentional: dynamic navigation through JSON
       current = current?.[segment as string];
     }
     if (Array.isArray(current))
     {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Intentional: spreading unknown array type
       const newArray = [...current];
       while (newArray.length <= elementIndex)
       {
         newArray.push(undefined);
       }
       newArray[elementIndex] = value;
-      return originalModify(text, pathToArray, newArray, options);
+      return originalModify(text, pathToArray, newArray, options ?? {});
     }
     return [];
   }
 
   const elementNode = children[elementIndex];
+  if (!elementNode)
+  {
+    return [];
+  }
 
   if (value === undefined)
   {
@@ -228,6 +242,7 @@ export class JSONCTCObject
       if (typeof value === 'object' && value !== null)
       {
         this.children.set(key, new JSONCTCObject(
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- Intentional: wrapping unknown nested object
           value,
           this.originalText,  // Share the same root text!
           [...this.path, key]  // Extend the path
@@ -243,6 +258,7 @@ export class JSONCTCObject
    * Example: obj.data.settings.theme will track changes at path ['settings', 'theme']
    */
   // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Intentional: dynamic proxy returns any for flexible property access
   get data(): any
   {
     return this.dataProxy;
@@ -263,12 +279,14 @@ export class JSONCTCObject
       {
         if (typeof prop !== 'string')
         {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- Intentional: proxy reflects unknown property types
           return Reflect.get(target, prop);
         }
 
         // RECURSIVE: If we have a child JSONCTCObject, return its proxy!
         if (this.children.has(prop))
         {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- Intentional: child.data returns any (dynamic proxy)
           return this.children.get(prop)!.data;
         }
 
@@ -314,12 +332,14 @@ export class JSONCTCObject
             if (i < newArray.length)
             {
               // Element exists in new array - set it (will track change if different)
-              (existingChild.data as any)[String(i)] = newArray[i];
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Intentional: array element access on dynamic proxy
+              existingChild.data[String(i)] = newArray[i];
             }
             else
             {
               // Element doesn't exist in new array - delete it
-              delete (existingChild.data as any)[String(i)];
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Intentional: array element access on dynamic proxy
+              delete existingChild.data[String(i)];
             }
           }
 
@@ -434,6 +454,7 @@ export class JSONCTCObject
         if (this.children.has(prop))
         {
           return {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Intentional: child.data returns any (dynamic proxy)
             value: this.children.get(prop)!.data,
             writable: true,
             enumerable: true,
@@ -476,6 +497,7 @@ export class JSONCTCObject
       }
 
       // Create copy and apply changes
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Intentional: spreading unknown array type
       const result = [...this.parsedData];
 
       // Apply children (recursively get their data)
@@ -504,6 +526,7 @@ export class JSONCTCObject
         const index = Number(key);
         if (!isNaN(index))
         {
+          // eslint-disable-next-line @typescript-eslint/no-array-delete -- Intentional: creating sparse array
           delete result[index];
         }
       }
@@ -581,6 +604,218 @@ export class JSONCTCObject
   }
 
   /**
+   * Helper: Check if value is a plain object (not array, not null, not class instance)
+   */
+  private isPlainObject(val: unknown): val is Record<string, unknown>
+  {
+    return (
+      val !== null &&
+      typeof val === 'object' &&
+      !Array.isArray(val) &&
+      val.constructor === Object
+    );
+  }
+
+  /**
+   * Helper: Deep merge source object onto target object
+   *
+   * Properties from source overwrite properties in target.
+   * Nested objects are recursively merged.
+   * Arrays and primitives are replaced (not merged).
+   *
+   * @param target - Base object (will be cloned)
+   * @param source - Object to merge in
+   * @returns New merged object
+   */
+  private deepMerge<T>(target: T, source: unknown): T
+  {
+    // If source isn't an object, return target
+    if (!this.isPlainObject(source))
+    {
+      return target;
+    }
+
+    // If target isn't an object, return source
+    if (!this.isPlainObject(target as unknown))
+    {
+      return source as T;
+    }
+
+    // Both are plain objects - merge recursively
+    const result = { ...target } as Record<string, unknown>;
+
+    for (const key in source)
+    {
+      if (Object.prototype.hasOwnProperty.call(source, key))
+      {
+        const sourceValue = source[key];
+        const targetValue = result[key];
+
+        // If both are plain objects, recurse
+        if (this.isPlainObject(sourceValue) && this.isPlainObject(targetValue))
+        {
+          result[key] = this.deepMerge(targetValue, sourceValue);
+        }
+        else
+        {
+          // Otherwise, source wins (replace)
+          result[key] = sourceValue;
+        }
+      }
+    }
+
+    return result as T;
+  }
+
+  /**
+   * Extract a typed value from a path in the data, with graceful fallback
+   *
+   * This method provides type-safe access to nested data without ESLint warnings.
+   * If the path doesn't exist or has the wrong type, returns the default value.
+   * If the path exists and both values are plain objects, deep merges them.
+   *
+   * @param path - Dot-separated path (e.g., 'options.subsystem.config') or array of segments
+   * @param defaultValue - Default value (also provides type inference!)
+   * @returns Typed value from data, or default if missing/wrong type
+   *
+   * @example
+   * ```typescript
+   * interface MyConfig {
+   *   hypersonicDrive: { energyUsageLimit: number }
+   * }
+   *
+   * const defaultConfig: MyConfig = {
+   *   hypersonicDrive: { energyUsageLimit: 5000 }
+   * };
+   *
+   * const obj = new JSONCTCObject(jsonStr);
+   * const config = obj.extract('options.subsystem.config', defaultConfig);
+   * //    ^^ TypeScript infers MyConfig from defaultValue!
+   *
+   * config.hypersonicDrive.energyUsageLimit;  // Fully typed, no ESLint warnings!
+   * ```
+   */
+  extract<T>(path: string | string[], defaultValue: T): T
+  {
+    // Parse path
+    const pathArray = typeof path === 'string' ? path.split('.') : path;
+
+    // Navigate to path in data
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any -- Intentional: navigating dynamic proxy
+    let current: any = this.data;
+
+    for (const segment of pathArray)
+    {
+      if (current == null || typeof current !== 'object')
+      {
+        // Path doesn't exist
+        return defaultValue;
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- Intentional: navigating dynamic proxy
+      current = current[segment];
+    }
+
+    // Path not found
+    if (current === undefined)
+    {
+      return defaultValue;
+    }
+
+    // Type mismatch check (primitive vs object/array)
+    if (typeof current !== typeof defaultValue)
+    {
+      return defaultValue;
+    }
+
+    // If both are plain objects, deep merge
+    if (this.isPlainObject(current) && this.isPlainObject(defaultValue as unknown))
+    {
+      return this.deepMerge(defaultValue, current);
+    }
+
+    // Arrays and primitives - just return current
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- Intentional: returning extracted value as T
+    return current;
+  }
+
+  /**
+   * Update a value at a path in the data (type-safe, preserves comments!)
+   *
+   * This method provides type-safe writes to nested data.
+   * Creates intermediate objects as needed.
+   * Triggers the existing Proxy tracking, so comments are preserved!
+   *
+   * @param path - Dot-separated path (e.g., 'options.subsystem.config') or array of segments
+   * @param value - Value to set (typed!)
+   *
+   * @example
+   * ```typescript
+   * const obj = new JSONCTCObject(jsonStr);
+   * obj.update('options.subsystem.config.energyUsageLimit', 9000);
+   * //    ^^ Type-safe! Comments preserved!
+   *
+   * console.log(obj.toString());  // Comments still there!
+   * ```
+   */
+  update<T>(path: string | string[], value: T): void
+  {
+    // Parse path
+    const pathArray = typeof path === 'string' ? path.split('.') : path;
+
+    // Filter out empty strings from split (e.g., '' becomes [''])
+    const filteredPath = pathArray.filter(segment => segment !== '');
+
+    if (filteredPath.length === 0)
+    {
+      throw new Error('Cannot update root - path must have at least one segment');
+    }
+
+    // Navigate to parent, creating intermediate objects as needed
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any -- Intentional: navigating dynamic proxy
+    let current: any = this.data;
+
+    for (let i = 0; i < filteredPath.length - 1; i++)
+    {
+      const segment = filteredPath[i]!;
+
+      // Check if current is an object
+      if (current == null || typeof current !== 'object')
+      {
+        throw new Error(`Cannot navigate to ${filteredPath.slice(0, i + 1).join('.')}: parent is not an object`);
+      }
+
+      // Get or create next level
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- Intentional: navigating dynamic proxy
+      let next = current[segment];
+
+      if (next === undefined || next === null)
+      {
+        // Create intermediate object
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Intentional: creating new object for path navigation
+        next = {};
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- Intentional: setting on dynamic proxy
+        current[segment] = next;
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Intentional: navigating down
+      current = next;
+    }
+
+    // Set final value
+    const finalKey = filteredPath[filteredPath.length - 1]!;
+
+    // Check if current is an object
+    if (current == null || typeof current !== 'object')
+    {
+      throw new Error(`Cannot set ${path.toString()}: parent is not an object`);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Intentional: setting on dynamic proxy
+    current[finalKey] = value;
+  }
+
+  /**
    * Serialize the object back to a string
    *
    * If originalText exists, applies changes surgically to preserve comments.
@@ -620,6 +855,7 @@ export class JSONCTCObject
       for (const path of deletions)
       {
         const edits = modify(modifiedText, path, undefined, { formattingOptions });
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- Intentional: edits from modify() are jsonc-parser edit objects
         modifiedText = applyEdits(modifiedText, edits);
       }
 
@@ -627,6 +863,7 @@ export class JSONCTCObject
       for (const [path, value] of changes)
       {
         const edits = modify(modifiedText, path, value, { formattingOptions });
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- Intentional: edits from modify() are jsonc-parser edit objects
         modifiedText = applyEdits(modifiedText, edits);
       }
 

@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { FileWriteOp } from './FileWriteOp';
 import { JSONCTCObject } from './JSONCTCObject';
 
@@ -77,8 +79,11 @@ describe('FileWriteOp', () =>
     expect(fileContent).toContain('"count": 42');
 
     // Verify it's valid JSON
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const parsed = JSON.parse(fileContent);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(parsed.foo).toBe('bar');
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(parsed.count).toBe(42);
   });
 
@@ -380,9 +385,9 @@ Line 4`;
     ]);
 
     // Verify all succeeded
-    expect(results[0]!.ok).toBe(true);
-    expect(results[1]!.ok).toBe(true);
-    expect(results[2]!.ok).toBe(true);
+    expect(results[0].ok).toBe(true);
+    expect(results[1].ok).toBe(true);
+    expect(results[2].ok).toBe(true);
 
     // Verify all files have correct content
     expect(fs.readFileSync(filePath1, 'utf-8')).toBe('Content 1');
