@@ -41,7 +41,7 @@ export class OpRunner
   /**
    * Create an OpRunner instance (async because IO setup may be async)
    */
-  static async create(initialOp: Op, ioConfig: OpRunnerArgs = {mode: "interactive"}): Promise<OpRunner>
+  static async create(initialOp: Op, ioConfig: OpRunnerArgs = { mode: 'interactive' }): Promise<OpRunner>
   {
     const io = await createIOContext(ioConfig);
     return new OpRunner(initialOp, ioConfig, io);
@@ -140,6 +140,7 @@ export class OpRunner
           this.stack.pop(); // pop child
           this.parentStack.pop(); // pop parent info
           // parent stays on stack, will be re-run
+          // FIXME: @masonmark 2025-10-18: Maybe we want to add mechanism for re-running parent to know the outcome of the child operation here
           if (OpRunner.opLoggingEnabled) console.log('');
           continue;
         }

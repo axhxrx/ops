@@ -11,6 +11,7 @@ export default defineConfig(
   {
     languageOptions: {
       parserOptions: {
+        tsconfigRootDir: import.meta.dirname,
         projectService: {
           // Need this to stop:
           //   0:0  error  Parsing error: /Volumes/CODE/@axhxrx/ops/Op.test.ts was not found by the project service. Consider either including it in the tsconfig.json or including it in allowDefaultProject

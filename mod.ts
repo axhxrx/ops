@@ -19,3 +19,6 @@ export { SelectFromListOp } from './SelectFromListOp';
 export { ShowTableOp } from './ShowTableOp.tsx';
 export type { ShowTableOpOptions, TableColumn, TableData, TableDataProvider, TableMode,
   TableRow } from './ShowTableOp.tsx';
+export { MenuOp } from './MenuOp';
+export { Menu, MenuItem, InfoPanel } from './MenuPrimitives';
+export type { DynamicContent, LineContent } from './MenuPrimitives';

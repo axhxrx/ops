@@ -132,7 +132,7 @@ export abstract class Op
    */
   protected handleOutcome<OpT extends Op>(
     op: OpT,
-    handler: OutcomeHandler<OpT>,
+    handler: OutcomeHandler<OpT> = (_outcome) => true,
   ): Success<OpWithHandler<OpT>>
   {
     return this.succeed({ op, handler });
