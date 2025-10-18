@@ -1,4 +1,4 @@
-import type { Op } from 'Op';
+import type { Op } from './Op';
 
 /**
  A success outcome, containing a value.
