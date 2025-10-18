@@ -100,30 +100,32 @@ export abstract class Op
 
    @example
    ```typescript
-   // Re-run parent when child is canceled
+   // Re-run parent when child completes (default behavior)
+   return this.handleOutcome(new FileOperationsMenuOp());
+
+   // Navigate to different op after child
    return this.handleOutcome(
-     new FileOperationsMenuOp(),
-     (outcome) => !outcome.ok && outcome.failure === 'canceled'
+     new ConfirmOp('Delete?'),
+     (outcome) => {
+       if (outcome.ok && outcome.value === true) {
+         return new DeleteOp();
+       }
+       return this; // Ask again
+     }
    );
 
-   // Re-run parent on any failure
+   // Done after child completes
    return this.handleOutcome(
-     new SomeOp(),
-     (outcome) => !outcome.ok
-   );
-
-   // Re-run parent on success
-   return this.handleOutcome(
-     new ConfirmOp('Try again?'),
-     (outcome) => outcome.ok && outcome.value === true
+     new DisplayResultOp(data),
+     () => null // Pop both when done
    );
 
    // Route to different ops based on outcome
    return this.handleOutcome(
      new SelectFromListOp(['A', 'B', 'Back']),
      (outcome) => {
-       if (!outcome.ok) return true; // re-run on cancel
-       if (outcome.value === 'Back') return true;
+       if (!outcome.ok) return this; // re-run on cancel
+       if (outcome.value === 'Back') return this;
        if (outcome.value === 'A') return new OpA();
        return new OpB();
      }
@@ -132,10 +134,11 @@ export abstract class Op
    */
   protected handleOutcome<OpT extends Op>(
     op: OpT,
-    handler: OutcomeHandler<OpT> = (_outcome) => true,
+    handler?: OutcomeHandler<OpT>,
   ): Success<OpWithHandler<OpT>>
   {
-    return this.succeed({ op, handler });
+    const defaultHandler = (_outcome: ReturnType<typeof this['run']>) => this;
+    return this.succeed({ op, handler: handler || defaultHandler });
   }
 
   /**
