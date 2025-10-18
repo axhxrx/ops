@@ -125,6 +125,11 @@ export type ShowTableOpOptions<T = Record<string, string | number | boolean>> = 
    Error/validation message to display prominently in the UI
    */
   errorMessage?: string | null;
+
+  /**
+   Fill terminal height by adding spacer (naturally pushes old content up, default: true)
+   */
+  fillHeight?: boolean;
 };
 
 /**

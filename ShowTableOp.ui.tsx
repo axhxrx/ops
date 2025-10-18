@@ -418,47 +418,77 @@ export const TableView = <T extends Record<string, string | number | boolean>>(
   const calculateColumnWidths = (columns: TableColumn[], rows: TableRow<T>[]) =>
   {
     const widths: Record<string, number> = {};
+    const actualContentWidths: Record<string, number> = {};
 
-    // Calculate ideal widths first
+    // Calculate ideal widths AND actual content widths
     for (const col of columns)
     {
       // Start with specified width or header length
       let maxWidth = col.width ?? col.label.length;
+      let actualMaxWidth = col.label.length;
 
-      // Check all row data for this column
-      if (!col.width)
+      // Check all row data for this column to find actual content width
+      for (const row of rows)
       {
-        for (const row of rows)
+        const value = row.data[col.key];
+        const valueStr = value?.toString() ?? '';
+        actualMaxWidth = Math.max(actualMaxWidth, valueStr.length);
+        if (!col.width)
         {
-          const value = row.data[col.key];
-          const valueStr = value?.toString() ?? '';
           maxWidth = Math.max(maxWidth, valueStr.length);
         }
       }
 
       widths[col.key] = maxWidth;
+      actualContentWidths[col.key] = actualMaxWidth;
     }
 
     // Calculate total width needed (including spacing)
     const multiSelectPadding = mode === 'select-multi' ? 4 : 0; // [✓] + space
     const columnSpacing = (columns.length - 1) * 2; // 2 spaces between columns
-    const totalIdealWidth = Object.values(widths).reduce((sum, w) => sum + w, 0)
+    const totalCurrentWidth = Object.values(widths).reduce((sum, w) => sum + w, 0)
       + columnSpacing
       + multiSelectPadding;
 
-    // If table is too wide, proportionally shrink columns
     // Use more conservative margin to prevent wrapping
     const availableWidth = terminalWidth - 10; // Leave generous margin
-    if (totalIdealWidth > availableWidth)
-    {
-      const shrinkFactor = availableWidth / totalIdealWidth;
 
-      // Shrink each column proportionally, but ensure minimum width of 3
-      // (just enough for "…")
+    if (totalCurrentWidth > availableWidth)
+    {
+      // SHRINK: Table is too wide, proportionally shrink columns
+      const shrinkFactor = availableWidth / totalCurrentWidth;
+
       for (const col of columns)
       {
         const idealWidth = widths[col.key] ?? col.label.length;
         widths[col.key] = Math.max(3, Math.floor(idealWidth * shrinkFactor));
+      }
+    }
+    else if (totalCurrentWidth < availableWidth)
+    {
+      // EXPAND: We have extra space! Distribute to columns that need it
+      const extraSpace = availableWidth - totalCurrentWidth;
+
+      // Find columns that could use more space (where content > current width)
+      const expandableColumns = columns.filter((col) =>
+      {
+        const currentWidth = widths[col.key] ?? 0;
+        const contentWidth = actualContentWidths[col.key] ?? 0;
+        return contentWidth > currentWidth;
+      });
+
+      if (expandableColumns.length > 0)
+      {
+        // Distribute extra space to expandable columns
+        const spacePerColumn = Math.floor(extraSpace / expandableColumns.length);
+
+        for (const col of expandableColumns)
+        {
+          const currentWidth = widths[col.key] ?? 0;
+          const contentWidth = actualContentWidths[col.key] ?? 0;
+          // Expand up to actual content width, but not more than our share of extra space
+          widths[col.key] = Math.min(contentWidth, currentWidth + spacePerColumn);
+        }
       }
     }
 
@@ -623,6 +653,41 @@ export const TableView = <T extends Record<string, string | number | boolean>>(
   const hasMoreAbove = scrollTop > 0;
   const hasMoreBelow = data ? scrollTop + viewportHeight < data.rows.length : false;
 
+  // Calculate fillHeight spacer (similar to MenuOp)
+  const fillHeight = options.fillHeight ?? true;
+  let spacerHeight = 0;
+
+  if (fillHeight && data)
+  {
+    let contentHeight = 0;
+
+    // Title (if present)
+    if (options.title)
+    {
+      contentHeight += 2; // 1 line + marginBottom
+    }
+
+    // Table header + separator
+    contentHeight += 2; // header row + separator row
+
+    // Visible rows
+    contentHeight += visibleRows.length;
+
+    // Scroll indicators
+    if (hasMoreAbove) contentHeight += 1;
+    if (hasMoreBelow) contentHeight += 1;
+
+    // Help text area (approximate height of the box)
+    const helpTextLines = errorMessage ? 8 : (data.rows[highlightedIndex]?.helpText ? 8 : 0);
+    contentHeight += helpTextLines;
+
+    // Keyboard shortcuts
+    contentHeight += 2; // marginTop + 1 line
+
+    // Calculate remaining space to fill (subtract 1 to prevent pushing first line off-screen)
+    spacerHeight = Math.max(0, terminalHeight - contentHeight - 1);
+  }
+
   return (
     <Box flexDirection="column">
       {/* Title */}
@@ -718,6 +783,9 @@ export const TableView = <T extends Record<string, string | number | boolean>>(
           <Text dimColor>▼ {data.rows.length - (scrollTop + viewportHeight)} more below...</Text>
         </Box>
       )}
+
+      {/* Spacer to push help text and shortcuts to bottom */}
+      {spacerHeight > 0 && <Box key='spacer-bottom' height={spacerHeight} />}
 
       {/* Help text area */}
       {renderHelpText()}

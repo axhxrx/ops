@@ -199,6 +199,7 @@ export class SelectFromFilesystemOp extends Op
         cancelable: this.options.cancelable ?? true,
         title: `📁 ${this.currentPath}`,
         errorMessage: errorMsg,
+        fillHeight: true, // Fill terminal height like MenuOp
       });
 
       const tableResult = await tableOp.run();
