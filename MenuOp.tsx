@@ -106,6 +106,36 @@ if (import.meta.main)
 {
   const { Menu, MenuItem, InfoPanel } = await import('./MenuPrimitives');
 
+  // Parse args: `./MenuOp.tsx last` or `./MenuOp.tsx 3` or `./MenuOp.tsx 1 2 4`
+  const args = process.argv.slice(2);
+  let examplestoRun: number[] = [];
+
+  if (args.length === 0)
+  {
+    // No args - run all examples
+    examplestoRun = [1, 2, 3, 4, 5];
+  }
+  else
+  {
+    for (const arg of args)
+    {
+      if (arg === 'last')
+      {
+        examplestoRun.push(5);
+      }
+      else
+      {
+        const num = parseInt(arg, 10);
+        if (!isNaN(num) && num >= 1 && num <= 5)
+        {
+          examplestoRun.push(num);
+        }
+      }
+    }
+  }
+
+  const shouldRun = (exampleNum: number) => examplestoRun.includes(exampleNum);
+
   // Don't use console.log before Ink renders - it confuses the layout!
   // console.log('='.repeat(80));
   // console.log('MenuOp Examples - Kick-Ass Menus');
@@ -114,6 +144,9 @@ if (import.meta.main)
 
   // Example 1: Simple menu matching the user's first mockup
   // console.log('Example 1: Manifest loader menu\n');
+
+  if (shouldRun(1))
+  {
 
   const menu1 = Menu.create(
     MenuItem.create('new' as const)
@@ -146,9 +179,13 @@ if (import.meta.main)
   }
 
   console.log('\n' + '='.repeat(80) + '\n');
+  }
 
   // Example 2: Menu with multi-line header and reactive content
   // console.log('Example 2: Menu with detailed header and reactive status\n');
+
+  if (shouldRun(2))
+  {
 
   // Simulate dynamic status
   let buildStatus: 'Idle' | 'Building' | 'Complete' = 'Building';
@@ -197,9 +234,13 @@ if (import.meta.main)
   }
 
   console.log('\n' + '='.repeat(80) + '\n');
+  }
 
   // Example 3: Menu with chalk styling
   // console.log('Example 3: Menu with custom styling\n');
+
+  if (shouldRun(3))
+  {
 
   const menu3 = Menu.create(
     MenuItem.create('danger' as const)
@@ -233,9 +274,13 @@ if (import.meta.main)
   }
 
   console.log('\n' + '='.repeat(80) + '\n');
+  }
 
   // Example 4: Demonstrate type safety
   // console.log('Example 4: Type-safe menu (compile-time safety)\n');
+
+  if (shouldRun(4))
+  {
 
   const menu4 = Menu.create(
     MenuItem.create('option1' as const).label('[1] First option'),
@@ -264,7 +309,89 @@ if (import.meta.main)
     }
   }
 
-  console.log('\n' + '='.repeat(80));
+  console.log('\n' + '='.repeat(80) + '\n');
+  }
+
+  // Example 5: Split-pane mode with details panel
+  // console.log('Example 5: Split-pane mode with details\n');
+
+  if (shouldRun(5))
+  {
+
+  // Create a simple file logger for debugging
+  // const fs = await import('fs');
+  // const logFile = '/tmp/menuop-debug.log';
+  // const fileLogger = {
+  //   log: (message: string) =>
+  //   {
+  //     fs.appendFileSync(logFile, message + '\n');
+  //   },
+  // };
+  // // Clear log file
+  // fs.writeFileSync(logFile, '=== MenuOp Debug Log ===\n');
+
+  const menu5 = Menu.create(
+    MenuItem.create('vegetables' as const)
+      .label('[V]egetables')
+      .help('Configure vegetable settings')
+      .details([
+        ['Setting', 'Value'],
+        ['Enabled', 'Yes'],
+        ['Count', '42'],
+        ['Quality', 'Premium'],
+        ['Source', 'Local Farm'],
+      ]),
+    MenuItem.create('fruits' as const)
+      .label('[F]ruits')
+      .help('Configure fruit preferences')
+      .details('Fresh fruits are sourced from local orchards. All items are organic and pesticide-free. Available year-round with seasonal varieties.'),
+    MenuItem.create('grains' as const)
+      .label('[G]rains')
+      .help('Grain and cereal options')
+      .details(
+        InfoPanel.lines(
+          '🌾 Grain Settings',
+          '',
+          ['Type', 'Whole Grain'],
+          ['Gluten-free', 'Available'],
+          ['Organic', 'Yes'],
+        ),
+      ),
+    MenuItem.create('dairy' as const)
+      .label('[D]airy')
+      .help('Dairy products and alternatives')
+      .details(() =>
+        InfoPanel.lines(
+          '🥛 Dairy Options',
+          '',
+          `Updated: ${new Date().toLocaleTimeString()}`,
+          '',
+          ['Milk', 'Whole, 2%, Skim'],
+          ['Cheese', 'Variety Pack'],
+          ['Yogurt', 'Greek, Regular'],
+        )),
+  )
+    .header(InfoPanel.text('Food Category Settings'))
+    .footer(InfoPanel.columns('Split-pane demo', 'Arrow keys to navigate', 'Esc to cancel'))
+    .detailsMinWidth(40); // Details pane gets at least 40% width
+
+  const op5 = new MenuOp(menu5, { cancelable: true });
+  const result5 = await op5.run(/* { logger: fileLogger } */);
+
+  if (result5.ok)
+  {
+    const selected: string = result5.value;
+    console.log(`\n✅ Selected: ${selected}`);
+  }
+  else if (result5.failure === 'canceled')
+  {
+    console.log('\n🚫 Canceled');
+  }
+
+  console.log('\n' + '='.repeat(80) + '\n');
+  }
+
+  // Final summary
   console.log('All examples complete!');
   console.log('='.repeat(80));
 }

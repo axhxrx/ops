@@ -154,6 +154,7 @@ export class MenuItem<T extends string>
       label?: string;
       shortcut?: string;
       help?: string;
+      details?: DynamicContent<InfoPanel>;
     },
   )
   {}
@@ -201,6 +202,58 @@ export class MenuItem<T extends string>
   help(text: string): this
   {
     this.config.help = text;
+    return this;
+  }
+
+  /**
+   * Set the details panel (displayed in split-pane mode on the right side)
+   *
+   * Supports ergonomic input formats:
+   * - String: Auto-wrapped in InfoPanel.text()
+   * - String[][]: Auto-wrapped in InfoPanel.lines()
+   * - InfoPanel: Used directly
+   * - Function: Called reactively on each render
+   *
+   * @example
+   * ```typescript
+   * // Simple string (auto-wrapped)
+   * item.details('This is a description')
+   *
+   * // Table data (auto-wrapped)
+   * item.details([
+   *   ['Name', 'Alice'],
+   *   ['Age', '30'],
+   *   ['Status', 'Active']
+   * ])
+   *
+   * // Direct InfoPanel (for custom formatting)
+   * item.details(InfoPanel.lines('Line 1', ['Left', 'Right']))
+   *
+   * // Reactive content
+   * item.details(() => InfoPanel.text(`Updated: ${new Date()}`))
+   * ```
+   */
+  details(content: string | string[][] | InfoPanel | (() => InfoPanel)): this
+  {
+    // Normalize to DynamicContent<InfoPanel>
+    if (typeof content === 'string')
+    {
+      this.config.details = InfoPanel.text(content);
+    }
+    else if (Array.isArray(content))
+    {
+      // string[][] → InfoPanel.lines(...content)
+      this.config.details = InfoPanel.lines(...content);
+    }
+    else if (content instanceof InfoPanel)
+    {
+      this.config.details = content;
+    }
+    else
+    {
+      // Must be () => InfoPanel
+      this.config.details = content;
+    }
     return this;
   }
 
@@ -257,6 +310,22 @@ export class MenuItem<T extends string>
   {
     return this.config.help;
   }
+
+  /**
+   * Get the details panel (resolved if dynamic)
+   */
+  getDetails(): InfoPanel | undefined
+  {
+    if (!this.config.details) return undefined;
+
+    // Resolve if dynamic
+    if (typeof this.config.details === 'function')
+    {
+      return this.config.details();
+    }
+
+    return this.config.details;
+  }
 }
 
 /**
@@ -294,6 +363,7 @@ export class Menu<T extends string>
   private config: {
     header?: InfoPanel;
     footer?: InfoPanel;
+    detailsMinWidth?: number; // Minimum percentage width for details pane (0-100)
   } = {};
 
   private constructor(
@@ -333,6 +403,29 @@ export class Menu<T extends string>
   getFooter(): InfoPanel | undefined
   {
     return this.config.footer;
+  }
+
+  /**
+   * Set the minimum width percentage for the details pane (0-100)
+   * Default is 25% if not set
+   *
+   * @example
+   * ```typescript
+   * menu.detailsMinWidth(40) // Details pane gets at least 40% of terminal width
+   * ```
+   */
+  detailsMinWidth(percentage: number): this
+  {
+    this.config.detailsMinWidth = Math.max(0, Math.min(100, percentage));
+    return this;
+  }
+
+  /**
+   * Get the minimum width percentage for the details pane
+   */
+  getDetailsMinWidth(): number
+  {
+    return this.config.detailsMinWidth ?? 25; // Default 25%
   }
 
   /**
