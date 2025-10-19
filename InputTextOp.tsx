@@ -142,6 +142,10 @@ export class InputTextOp extends Op
             : undefined
         }
       />,
+      {
+        stdin: ioContext.stdin as any,
+        stdout: ioContext.stdout as any,
+      },
     );
 
     await waitUntilExit();

@@ -382,4 +382,35 @@ export class OpRunner
   {
     return [...this.stack];
   }
+
+  /**
+   * Save recorded session to file (only works if mode is 'record')
+   *
+   * @param filepath - Path to save the session file
+   * @returns Promise that resolves when session is saved
+   *
+   * @example
+   * ```typescript
+   * const runner = await OpRunner.create(myOp, { mode: 'record', sessionFile: 'session.json' });
+   * await runner.run();
+   * await runner.saveSession('session.json');
+   * ```
+   */
+  async saveSession(filepath: string): Promise<void>
+  {
+    if (this.ioConfig.mode !== 'record')
+    {
+      console.warn('[OpRunner] Cannot save session - not in record mode');
+      return;
+    }
+
+    const recordableStdin = this.io.recordableStdin;
+    if (!recordableStdin)
+    {
+      console.warn('[OpRunner] Cannot save session - no recordable stdin available');
+      return;
+    }
+
+    await recordableStdin.saveSession(filepath);
+  }
 }

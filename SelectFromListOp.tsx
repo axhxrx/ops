@@ -152,6 +152,10 @@ export class SelectFromListOp<OptionsT extends readonly SelectOption[]> extends 
           : undefined}
         onKeystroke={this.config.onKeystroke}
       />,
+      {
+        stdin: ioContext.stdin as any,
+        stdout: ioContext.stdout as any,
+      },
     );
 
     await waitUntilExit();

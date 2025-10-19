@@ -279,7 +279,11 @@ export class ShowTableOp<T = Record<string, string | number | boolean>> extends 
           }
           : undefined}
       />,
-      // exitOnCtrlC defaults to true - let Ink handle Ctrl-C and terminate
+      {
+        stdin: ioContext.stdin as any,
+        stdout: ioContext.stdout as any,
+        // exitOnCtrlC defaults to true - let Ink handle Ctrl-C and terminate
+      },
     );
 
     await waitUntilExit();

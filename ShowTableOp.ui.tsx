@@ -8,6 +8,7 @@ import type {
   TableDataProvider,
   TableRow,
 } from './ShowTableOp';
+import { getDisplayWidth, truncateToWidth, padToWidth } from './StringUtils';
 
 /**
  Props for TableView component
@@ -498,6 +499,7 @@ export const TableView = <T extends Record<string, string | number | boolean>>(
   const columnWidths = calculateColumnWidths(data.columns, data.rows);
 
   // Format cell value with alignment and truncation
+  // NOW WITH CJK SUPPORT! Uses StringUtils for proper full-width character handling
   const formatCell = (value: string | number | boolean | undefined, column: TableColumn) =>
   {
     const str = value?.toString() ?? '';
@@ -507,37 +509,19 @@ export const TableView = <T extends Record<string, string | number | boolean>>(
     // For very narrow columns, just show ellipsis if content doesn't fit
     if (width <= 4)
     {
-      if (str.length > width)
+      const displayWidth = getDisplayWidth(str);
+      if (displayWidth > width)
       {
-        return '…'.padEnd(width, ' ');
+        return padToWidth('…', width, 'left');
       }
-      return str.padEnd(width, ' ');
+      return padToWidth(str, width, 'left');
     }
 
-    // Truncate if too long (leaving room for ellipsis)
-    let displayStr = str;
-    if (str.length > width)
-    {
-      // Leave room for ellipsis
-      displayStr = str.substring(0, width - 1) + '…';
-    }
+    // Truncate if too long (using display width, not character count!)
+    const truncated = truncateToWidth(str, width);
 
-    // Apply alignment
-    if (align === 'right')
-    {
-      return displayStr.padStart(width, ' ');
-    }
-    else if (align === 'center')
-    {
-      const totalPadding = width - displayStr.length;
-      const leftPadding = Math.floor(totalPadding / 2);
-      const rightPadding = totalPadding - leftPadding;
-      return ' '.repeat(leftPadding) + displayStr + ' '.repeat(rightPadding);
-    }
-    else
-    {
-      return displayStr.padEnd(width, ' ');
-    }
+    // Apply alignment using display-width-aware padding
+    return padToWidth(truncated, width, align);
   };
 
   // Render help text area (or error message overlay)

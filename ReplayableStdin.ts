@@ -20,6 +20,9 @@ import type { InputEvent, Session } from './RecordableStdin';
  */
 export class ReplayableStdin extends EventEmitter
 {
+  /** Enable debug logging (set to false to avoid interfering with Ink UI) */
+  static DEBUG = false;
+
   private queue: InputEvent[];
   private index = 0;
   private isReplaying = true;
@@ -35,9 +38,12 @@ export class ReplayableStdin extends EventEmitter
     this.sessionTimestamp = session.timestamp;
     this.startTime = Date.now();
 
-    console.log(`[ReplayableStdin] 📼 Loaded session from: ${sessionPath}`);
-    console.log(`[ReplayableStdin] 📅 Recorded: ${this.sessionTimestamp}`);
-    console.log(`[ReplayableStdin] 🎬 Replaying ${this.queue.length} events...\n`);
+    if (ReplayableStdin.DEBUG)
+    {
+      if (ReplayableStdin.DEBUG) console.log(`[ReplayableStdin] 📼 Loaded session from: ${sessionPath}`);
+      if (ReplayableStdin.DEBUG) console.log(`[ReplayableStdin] 📅 Recorded: ${this.sessionTimestamp}`);
+      if (ReplayableStdin.DEBUG) console.log(`[ReplayableStdin] 🎬 Replaying ${this.queue.length} events...\n`);
+    }
   }
 
   /**
@@ -58,7 +64,7 @@ export class ReplayableStdin extends EventEmitter
    */
   startReplay(startupDelay = 100): void
   {
-    console.log(`[ReplayableStdin] ⏳ Waiting ${startupDelay}ms for UI to mount...\n`);
+    if (ReplayableStdin.DEBUG) console.log(`[ReplayableStdin] ⏳ Waiting ${startupDelay}ms for UI to mount...\n`);
     setTimeout(() =>
     {
       this.replayNextEvent();
@@ -95,15 +101,15 @@ export class ReplayableStdin extends EventEmitter
       }
 
       // Buffer the data and emit 'readable' (Ink uses 'readable' not 'data')
-      console.log(`[ReplayableStdin] ⚡ Event ${this.index + 1}/${this.queue.length}: ${JSON.stringify(event.data)}`);
-      console.log(`[ReplayableStdin] 🔍 'readable' listener count: ${this.listenerCount('readable')}`);
+      if (ReplayableStdin.DEBUG) console.log(`[ReplayableStdin] ⚡ Event ${this.index + 1}/${this.queue.length}: ${JSON.stringify(event.data)}`);
+      if (ReplayableStdin.DEBUG) console.log(`[ReplayableStdin] 🔍 'readable' listener count: ${this.listenerCount('readable')}`);
 
       const buffer = Buffer.from(event.data);
       this.readBuffer.push(buffer);
 
       // Emit 'readable' so Ink knows to call read()
       this.emit('readable');
-      console.log(`[ReplayableStdin] ✅ 'readable' event emitted`);
+      if (ReplayableStdin.DEBUG) console.log(`[ReplayableStdin] ✅ 'readable' event emitted`);
 
       this.index++;
 
@@ -114,8 +120,8 @@ export class ReplayableStdin extends EventEmitter
 
   private switchToInteractive(): void
   {
-    console.log('\n[ReplayableStdin] ✅ Replay complete!');
-    console.log('[ReplayableStdin] 🎮 Switching to interactive mode...\n');
+    if (ReplayableStdin.DEBUG) console.log('\n[ReplayableStdin] ✅ Replay complete!');
+    if (ReplayableStdin.DEBUG) console.log('[ReplayableStdin] 🎮 Switching to interactive mode...\n');
 
     this.isReplaying = false;
 
@@ -189,7 +195,7 @@ export class ReplayableStdin extends EventEmitter
     if (this.isReplaying && this.readBuffer.length > 0)
     {
       const buffer = this.readBuffer.shift();
-      console.log(`[ReplayableStdin] 📖 read() called, returning: ${JSON.stringify(buffer?.toString())}`);
+      if (ReplayableStdin.DEBUG) console.log(`[ReplayableStdin] 📖 read() called, returning: ${JSON.stringify(buffer?.toString())}`);
       return buffer;
     }
 
@@ -219,7 +225,7 @@ export class ReplayableStdin extends EventEmitter
 
   ref(): this
   {
-    console.log('[ReplayableStdin] 🔗 ref() called by Ink');
+    if (ReplayableStdin.DEBUG) console.log('[ReplayableStdin] 🔗 ref() called by Ink');
     if ('ref' in process.stdin && typeof process.stdin.ref === 'function')
     {
       process.stdin.ref();
@@ -229,7 +235,7 @@ export class ReplayableStdin extends EventEmitter
 
   unref(): this
   {
-    console.log('[ReplayableStdin] 🔓 unref() called by Ink');
+    if (ReplayableStdin.DEBUG) console.log('[ReplayableStdin] 🔓 unref() called by Ink');
     if ('unref' in process.stdin && typeof process.stdin.unref === 'function')
     {
       process.stdin.unref();
@@ -240,13 +246,13 @@ export class ReplayableStdin extends EventEmitter
   // Override on/addListener to see when Ink attaches
   override on(event: string, listener: (...args: any[]) => void): this
   {
-    console.log(`[ReplayableStdin] 👂 Listener attached for '${event}'`);
+    if (ReplayableStdin.DEBUG) console.log(`[ReplayableStdin] 👂 Listener attached for '${event}'`);
     return super.on(event, listener);
   }
 
   override addListener(event: string, listener: (...args: any[]) => void): this
   {
-    console.log(`[ReplayableStdin] 👂 addListener called for '${event}'`);
+    if (ReplayableStdin.DEBUG) console.log(`[ReplayableStdin] 👂 addListener called for '${event}'`);
     return super.addListener(event, listener);
   }
 }

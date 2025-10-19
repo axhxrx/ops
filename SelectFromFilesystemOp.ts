@@ -1,12 +1,11 @@
 #!/usr/bin/env bun
 
-import { stat, readdir } from 'node:fs/promises';
-import { join, dirname, sep } from 'node:path';
+import { dirname, sep } from 'node:path';
 import type { Stats } from 'node:fs';
 import type { IOContext } from './IOContext';
-import { Op } from './Op';
-import { ShowTableOp } from './ShowTableOp.tsx';
-import type { TableData, TableRow } from './ShowTableOp.tsx';
+import { BrowserOpBase } from './BrowserOpBase';
+import { ListDirectoryOp } from './ListDirectoryOp';
+import type { DirectoryListing } from './DirectoryListing';
 
 /**
  File system entry type
@@ -157,11 +156,16 @@ export type SelectFromFilesystemOpOptions = {
  }
  ```
  */
-export class SelectFromFilesystemOp extends Op
+export class SelectFromFilesystemOp extends BrowserOpBase<
+  FileSystemEntry,
+  DirectoryListing,
+  FileSystemSelectionMode,
+  FileSystemEntry | FileSystemEntry[],
+  'canceled' | 'pathNotFound' | 'permissionDenied' | 'notADirectory' | 'unknownError'
+>
 {
   name = 'SelectFromFilesystemOp';
   private currentPath: string;
-  private selectedEntries: Set<string> = new Set();
 
   constructor(private options: SelectFromFilesystemOpOptions = {})
   {
@@ -169,443 +173,66 @@ export class SelectFromFilesystemOp extends Op
     this.currentPath = options.startPath ?? process.cwd();
   }
 
-  async run(io?: IOContext)
+  // ==================== ABSTRACT METHOD IMPLEMENTATIONS ====================
+
+  protected async fetchListing(io?: IOContext)
   {
-    const selectionMode = this.options.selectionMode ?? 'file';
-    const isMultiSelect = selectionMode.startsWith('multi-');
-
-    // Keep navigating until user selects or cancels
-    let errorMsg: string | null = null;
-
-    while (true)
-    {
-      // Read current directory
-      const entriesResult = await this.readDirectory(this.currentPath);
-
-      if (!entriesResult.ok)
-      {
-        return entriesResult;
-      }
-
-      const entries = entriesResult.value;
-
-      // Create table data from entries
-      const tableData = this.createTableData(entries);
-
-      // Show table with appropriate mode (include any error from previous iteration)
-      const tableOp = new ShowTableOp({
-        mode: isMultiSelect ? 'select-multi' : 'select-row',
-        dataProvider: tableData,
-        cancelable: this.options.cancelable ?? true,
-        title: `📁 ${this.currentPath}`,
-        errorMessage: errorMsg,
-        fillHeight: true, // Fill terminal height like MenuOp
-      });
-
-      const tableResult = await tableOp.run();
-
-      // Clear error after showing it once
-      errorMsg = null;
-
-      if (!tableResult.ok)
-      {
-        // User canceled or error occurred
-        return tableResult;
-      }
-
-      // Handle selection based on mode
-      const selected = tableResult.value as unknown as TableRow<{
-        icon: string;
-        name: string;
-        size: string;
-        modified: string;
-        type: string;
-      }> | TableRow<{
-        icon: string;
-        name: string;
-        size: string;
-        modified: string;
-        type: string;
-      }>[];
-
-      if (isMultiSelect)
-      {
-        // Multi-select mode - return selected entries
-        const selectedRows = selected as TableRow<{
-          icon: string;
-          name: string;
-          size: string;
-          modified: string;
-          type: string;
-        }>[];
-
-        if (selectedRows.length === 0)
-        {
-          // Set error and loop to re-render with error
-          errorMsg = 'No items selected.\nPlease select at least one item with Space, then press Enter.';
-          continue;
-        }
-
-        // Map selected rows back to FileSystemEntry objects
-        const selectedEntries = selectedRows
-          .map((row) =>
-          {
-            const name = row.data.name;
-            return entries.find((e) => e.name === name);
-          })
-          .filter((e): e is FileSystemEntry => e !== undefined);
-
-        // Validate selection based on mode
-        const isValid = this.validateMultiSelection(selectedEntries, selectionMode);
-
-        if (!isValid)
-        {
-          errorMsg = this.getValidationMessage(selectionMode);
-          continue;
-        }
-
-        return this.succeed(selectedEntries as never);
-      }
-      else
-      {
-        // Single-select mode
-        const selectedRow = selected as TableRow<{
-          icon: string;
-          name: string;
-          size: string;
-          modified: string;
-          type: string;
-        }>;
-
-        const name = selectedRow.data.name;
-
-        // Handle special entries
-        if (name === '..')
-        {
-          // Go up one directory
-          this.currentPath = dirname(this.currentPath);
-          continue;
-        }
-
-        const entry = entries.find((e) => e.name === name);
-
-        if (!entry)
-        {
-          this.warn(io, 'Selected entry not found');
-          continue;
-        }
-
-        // If it's a directory and we're in single-select mode, descend into it
-        if (entry.type === 'directory')
-        {
-          if (selectionMode === 'directory')
-          {
-            // User wants to select this directory
-            return this.succeed(entry as never);
-          }
-          else
-          {
-            // Descend into directory
-            this.currentPath = entry.path;
-            continue;
-          }
-        }
-
-        // It's a file or other entry - validate and return
-        const isValid = this.validateSingleSelection(entry, selectionMode);
-
-        if (!isValid)
-        {
-          errorMsg = this.getValidationMessage(selectionMode);
-          continue;
-        }
-
-        return this.succeed(entry as never);
-      }
-    }
-  }
-
-  /**
-   Read directory and return FileSystemEntry array
-   */
-  private async readDirectory(dirPath: string)
-  {
-    try
-    {
-      const items = await readdir(dirPath);
-      const entries: FileSystemEntry[] = [];
-
-      for (const item of items)
-      {
-        const fullPath = join(dirPath, item);
-
-        try
-        {
-          const stats = await stat(fullPath);
-          const entry = this.createEntry(item, fullPath, stats);
-
-          // Apply filters
-          if (!this.options.showHidden && entry.hidden)
-          {
-            continue;
-          }
-
-          if (this.options.filter && !this.options.filter(entry))
-          {
-            continue;
-          }
-
-          entries.push(entry);
-        }
-        catch (_error)
-        {
-          // Skip entries we can't stat (permission denied, etc.)
-          continue;
-        }
-      }
-
-      // Sort entries
-      this.sortEntries(entries);
-
-      return this.succeed(entries);
-    }
-    catch (error: unknown)
-    {
-      if (error && typeof error === 'object' && 'code' in error)
-      {
-        if (error.code === 'ENOENT')
-        {
-          return this.fail('pathNotFound' as const, dirPath);
-        }
-        if (error.code === 'EACCES')
-        {
-          return this.fail('permissionDenied' as const, dirPath);
-        }
-      }
-
-      return this.fail('unknownError' as const, String(error));
-    }
-  }
-
-  /**
-   Create FileSystemEntry from stats
-   */
-  private createEntry(name: string, path: string, stats: Stats): FileSystemEntry
-  {
-    const type: FileSystemEntryType = stats.isSymbolicLink()
-      ? 'symlink'
-      : stats.isDirectory()
-      ? 'directory'
-      : stats.isFile()
-      ? 'file'
-      : 'other';
-
-    // Get permissions in octal format (e.g., '755')
-    const permissions = (stats.mode & 0o777).toString(8);
-
-    return {
-      name,
-      path,
-      type,
-      size: stats.size,
-      modified: stats.mtime,
-      permissions,
-      hidden: name.startsWith('.'),
-      stats,
-    };
-  }
-
-  /**
-   Sort entries based on sort order option
-   */
-  private sortEntries(entries: FileSystemEntry[]): void
-  {
-    const order = this.options.sortOrder ?? 'name-asc';
-
-    // Always sort directories first, then apply secondary sort
-    entries.sort((a, b) =>
-    {
-      // Directories always come first
-      if (a.type === 'directory' && b.type !== 'directory') return -1;
-      if (a.type !== 'directory' && b.type === 'directory') return 1;
-
-      // Apply secondary sort
-      switch (order)
-      {
-        case 'name-asc':
-          return a.name.localeCompare(b.name);
-        case 'name-desc':
-          return b.name.localeCompare(a.name);
-        case 'size-asc':
-          return a.size - b.size;
-        case 'size-desc':
-          return b.size - a.size;
-        case 'modified-asc':
-          return a.modified.getTime() - b.modified.getTime();
-        case 'modified-desc':
-          return b.modified.getTime() - a.modified.getTime();
-        default:
-          return 0;
-      }
+    const listOp = new ListDirectoryOp(this.currentPath, {
+      showHidden: this.options.showHidden ?? false,
+      filter: this.options.filter,
+      sortOrder: this.options.sortOrder ?? 'name-asc',
     });
+
+    return await listOp.run(io);
   }
 
-  /**
-   Create table data from file system entries
-   */
-  private createTableData(entries: FileSystemEntry[]): TableData
+  protected navigateUp(): void
   {
-    // Add parent directory entry if not at root
-    const rows: TableRow<{
-      icon: string;
-      name: string;
-      size: string;
-      modified: string;
-      type: string;
-    }>[] = [];
-
-    if (this.currentPath !== sep && dirname(this.currentPath) !== this.currentPath)
-    {
-      rows.push({
-        data: {
-          icon: '📁',
-          name: '..',
-          size: '',
-          modified: '',
-          type: 'Parent',
-        },
-        helpText: 'Go up one directory',
-      });
-    }
-
-    // Add entries
-    for (const entry of entries)
-    {
-      const icon = this.getEntryIcon(entry);
-      const sizeStr = entry.type === 'directory' ? '' : this.formatSize(entry.size);
-      const modifiedStr = this.formatDate(entry.modified);
-      const typeStr = entry.type.charAt(0).toUpperCase() + entry.type.slice(1);
-
-      rows.push({
-        data: {
-          icon,
-          name: entry.name,
-          size: sizeStr,
-          modified: modifiedStr,
-          type: typeStr,
-        },
-        helpText: this.getEntryHelpText(entry),
-      });
-    }
-
-    return {
-      columns: [
-        { key: 'icon', label: '', width: 2 },
-        { key: 'name', label: 'Name', width: 40 },
-        { key: 'size', label: 'Size', width: 10, align: 'right' },
-        { key: 'modified', label: 'Modified', width: 20 },
-        { key: 'type', label: 'Type', width: 12 },
-      ],
-      rows,
-    };
+    this.currentPath = dirname(this.currentPath);
   }
 
-  /**
-   Get icon for entry type
-   */
-  private getEntryIcon(entry: FileSystemEntry): string
+  protected navigateInto(entry: FileSystemEntry): void
   {
-    switch (entry.type)
-    {
-      case 'directory':
-        return '📁';
-      case 'symlink':
-        return '🔗';
-      case 'file':
-        // Could add file extension-based icons here
-        return '📄';
-      default:
-        return '❓';
-    }
+    this.currentPath = entry.path;
   }
 
-  /**
-   Format file size in human-readable format
-   */
-  private formatSize(bytes: number): string
+  protected shouldShowParentEntry(): boolean
   {
-    if (bytes === 0) return '0 B';
-
-    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-    const k = 1024;
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-
-    return `${(bytes / Math.pow(k, i)).toFixed(1)} ${units[i]}`;
+    // Show parent if we're not at root and parent is different from current
+    return this.currentPath !== sep && dirname(this.currentPath) !== this.currentPath;
   }
 
-  /**
-   Format date in readable format
-   */
-  private formatDate(date: Date): string
+  protected getTitle(): string
   {
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const days = diff / (1000 * 60 * 60 * 24);
-
-    if (days < 1)
-    {
-      return date.toLocaleTimeString(undefined, {
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    }
-    else if (days < 365)
-    {
-      return date.toLocaleDateString(undefined, {
-        month: 'short',
-        day: 'numeric',
-      });
-    }
-    else
-    {
-      return date.toLocaleDateString(undefined, {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      });
-    }
+    return `📁 ${this.currentPath}`;
   }
 
-  /**
-   Get help text for an entry
-   */
-  private getEntryHelpText(entry: FileSystemEntry): string
+  protected getSelectionMode(): FileSystemSelectionMode
   {
-    const lines: string[] = [];
-
-    lines.push(`Path: ${entry.path}`);
-    lines.push(`Type: ${entry.type}`);
-
-    if (entry.type === 'file')
-    {
-      lines.push(`Size: ${this.formatSize(entry.size)} (${entry.size.toLocaleString()} bytes)`);
-    }
-
-    lines.push(`Modified: ${entry.modified.toLocaleString()}`);
-    lines.push(`Permissions: ${entry.permissions}`);
-
-    if (entry.type === 'directory')
-    {
-      lines.push('\nPress Enter or → to open this directory');
-    }
-
-    return lines.join('\n');
+    return this.options.selectionMode ?? 'file';
   }
 
-  /**
-   Validate single selection
-   */
-  private validateSingleSelection(entry: FileSystemEntry, mode: FileSystemSelectionMode): boolean
+  protected isCancelable(): boolean
+  {
+    return this.options.cancelable ?? true;
+  }
+
+  protected getEntryName(entry: FileSystemEntry): string
+  {
+    return entry.name;
+  }
+
+  protected isDirectory(entry: FileSystemEntry): boolean
+  {
+    return entry.type === 'directory';
+  }
+
+  protected isDirectorySelectionMode(mode: FileSystemSelectionMode): boolean
+  {
+    return mode === 'directory';
+  }
+
+  protected validateSingleSelection(entry: FileSystemEntry, mode: FileSystemSelectionMode): boolean
   {
     if (mode === 'any') return true;
     if (mode === 'file') return entry.type === 'file';
@@ -613,10 +240,7 @@ export class SelectFromFilesystemOp extends Op
     return true;
   }
 
-  /**
-   Validate multi selection
-   */
-  private validateMultiSelection(entries: FileSystemEntry[], mode: FileSystemSelectionMode): boolean
+  protected validateMultiSelection(entries: FileSystemEntry[], mode: FileSystemSelectionMode): boolean
   {
     if (mode === 'multi-any') return true;
 
@@ -633,10 +257,7 @@ export class SelectFromFilesystemOp extends Op
     return true;
   }
 
-  /**
-   Get validation error message
-   */
-  private getValidationMessage(mode: FileSystemSelectionMode): string
+  protected getValidationMessage(mode: FileSystemSelectionMode): string
   {
     switch (mode)
     {

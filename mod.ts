@@ -7,6 +7,7 @@ export { ConfirmOp } from './ConfirmOp';
 export { ResultOp, SelectNameOp, WelcomeOp } from './GameOps';
 export { InputTextOp } from './InputTextOp';
 export type { IOContext } from './IOContext';
+export { createIOContext } from './IOContext';
 export { Op } from './Op';
 export { OpRunner } from './OpRunner';
 export * from './Outcome';
@@ -22,3 +23,10 @@ export type { ShowTableOpOptions, TableColumn, TableData, TableDataProvider, Tab
 export { MenuOp } from './MenuOp';
 export { Menu, MenuItem, InfoPanel } from './MenuPrimitives';
 export type { DynamicContent, LineContent } from './MenuPrimitives';
+
+// Record/replay support
+export { parseOpRunnerArgs } from './args';
+export type { OpRunnerArgs } from './args';
+export { RecordableStdin } from './RecordableStdin';
+export type { InputEvent, Session } from './RecordableStdin';
+export { ReplayableStdin } from './ReplayableStdin';

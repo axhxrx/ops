@@ -170,6 +170,10 @@ export class FilePreviewOp extends Op
             unmount();
           }}
         />,
+        {
+          stdin: ioContext.stdin as any,
+          stdout: ioContext.stdout as any,
+        },
       );
 
       await waitUntilExit();
