@@ -15,7 +15,15 @@ export default defineConfig(
         projectService: {
           // Need this to stop:
           //   0:0  error  Parsing error: /Volumes/CODE/@axhxrx/ops/Op.test.ts was not found by the project service. Consider either including it in the tsconfig.json or including it in allowDefaultProject
-          allowDefaultProject: ['*.test.ts'],
+          // Allow specific directories without ** glob to avoid performance warning
+          allowDefaultProject: [
+            '*.test.ts',
+            '*.mts',
+            '*.config.*',
+            'src/*/*.test.ts',
+            'src/*.test.ts',
+            'examples/*.test.ts',
+          ],
         },
       },
     },
