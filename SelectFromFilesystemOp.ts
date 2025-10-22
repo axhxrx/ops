@@ -1,11 +1,11 @@
 #!/usr/bin/env bun
 
-import { dirname, sep } from 'node:path';
 import type { Stats } from 'node:fs';
-import type { IOContext } from './IOContext';
+import { dirname, sep } from 'node:path';
 import { BrowserOpBase } from './BrowserOpBase';
-import { ListDirectoryOp } from './ListDirectoryOp';
 import type { DirectoryListing } from './DirectoryListing';
+import type { IOContext } from './IOContext';
+import { ListDirectoryOp } from './ListDirectoryOp';
 
 /**
  File system entry type
@@ -280,9 +280,12 @@ if (import.meta.main)
   const { RenderMarkdownOp } = await import('./RenderMarkdownOp.tsx');
 
   // Track results for final summary
-  const demo1Result: { type: 'file' | 'dir' | 'files'; name?: string; size?: number; count?: number; canceled?: boolean } = { type: 'file' };
+  const demo1Result: { type: 'file' | 'dir' | 'files'; name?: string; size?: number; count?: number;
+    canceled?: boolean } = { type: 'file' };
   const demo2Result: { type: 'file' | 'dir' | 'files'; name?: string; canceled?: boolean } = { type: 'dir' };
-  const demo3Result: { type: 'file' | 'dir' | 'files'; count?: number; names?: string[]; canceled?: boolean } = { type: 'files' };
+  const demo3Result: { type: 'file' | 'dir' | 'files'; count?: number; names?: string[]; canceled?: boolean } = {
+    type: 'files',
+  };
 
   // Demo 1: Select a single file
   const fileOp = new SelectFromFilesystemOp({

@@ -165,7 +165,7 @@ export class S3ListOp extends Op
               size: object.size || 0,
               modified: object.lastModified ? new Date(object.lastModified) : new Date(),
               storageClass: object.storageClass,
-              etag: object.etag,
+              etag: object.eTag,
             });
           }
         }

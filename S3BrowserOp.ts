@@ -135,7 +135,7 @@ export class S3BrowserOp extends BrowserOpBase<
   /**
    * Get S3 credentials before starting navigation
    */
-  protected async beforeRun(io?: IOContext)
+  protected override async beforeRun(io?: IOContext)
   {
     // Get credentials first if not provided
     if (!this.options.credentials)
@@ -161,7 +161,7 @@ export class S3BrowserOp extends BrowserOpBase<
   /**
    * Apply custom filter if provided in options
    */
-  protected applyCustomFilter(listing: S3Listing): S3Listing
+  protected override applyCustomFilter(listing: S3Listing): S3Listing
   {
     if (!this.options.filter)
     {

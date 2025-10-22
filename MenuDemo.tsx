@@ -55,19 +55,19 @@ class MainMenuOp extends Op
       case 'File Operations':
         return this.handleOutcome(
           new FileOperationsMenuOp(),
-          (outcome) => !outcome.ok && outcome.failure === 'canceled',
+          (outcome) => !outcome.ok ? this : outcome.value,
         );
 
       case 'Settings':
         return this.handleOutcome(
           new SettingsMenuOp(),
-          (outcome) => !outcome.ok && outcome.failure === 'canceled',
+          (outcome) => !outcome.ok ? this : outcome.value,
         );
 
       case 'Help':
         return this.handleOutcome(
           new HelpOp(),
-          (outcome) => !outcome.ok && outcome.failure === 'canceled',
+          () => this, // Always return to main menu after help
         );
 
       case 'Exit':

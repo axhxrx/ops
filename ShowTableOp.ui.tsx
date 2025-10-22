@@ -1,5 +1,5 @@
+import { Box, type Key, Text, useInput, useStdout } from 'ink';
 import { useEffect, useState } from 'react';
-import { Box, Text, useInput, useStdout } from 'ink';
 import type { Logger } from './Logger';
 import type {
   ShowTableOpOptions,
@@ -8,7 +8,25 @@ import type {
   TableDataProvider,
   TableRow,
 } from './ShowTableOp';
-import { getDisplayWidth, truncateToWidth, padToWidth } from './StringUtils';
+import { getDisplayWidth, padToWidth, truncateToWidth } from './StringUtils';
+
+/**
+ Custom key handler result
+ */
+export type CustomKeyHandlerResult =
+  | { handled: false }
+  | { handled: true; action: 'continue' }
+  | { handled: true; action: 'navigate'; row: TableRow }
+  | { handled: true; action: 'select'; row: TableRow };
+
+/**
+ Custom key handler function
+ */
+export type CustomKeyHandler<T = Record<string, string | number | boolean>> = (
+  input: string,
+  key: Key,
+  currentRow: TableRow<T>,
+) => CustomKeyHandlerResult;
 
 /**
  Props for TableView component
@@ -19,6 +37,11 @@ export interface TableViewProps<T = Record<string, string | number | boolean>>
    Table options including mode, data provider, etc.
    */
   options: ShowTableOpOptions<T>;
+
+  /**
+   Callback when user selects a row (select-row mode)
+   */
+  onNavigate?: (row: TableRow<T>) => void;
 
   /**
    Callback when user selects a row (select-row mode)
@@ -49,6 +72,11 @@ export interface TableViewProps<T = Record<string, string | number | boolean>>
    Optional logger for debug output
    */
   logger?: Logger;
+
+  /**
+   Custom key handler for additional keyboard shortcuts
+   */
+  customKeyHandler?: CustomKeyHandler<T>;
 }
 
 /**
@@ -76,7 +104,8 @@ export interface TableViewProps<T = Record<string, string | number | boolean>>
  ```
  */
 export const TableView = <T extends Record<string, string | number | boolean>>(
-  { options, onSelect, onSelectMulti, onCancel, onExit, errorMessage: externalError, logger }: TableViewProps<T>,
+  { options, onNavigate, onSelect, onSelectMulti, onCancel, onExit, errorMessage: externalError, logger }:
+    TableViewProps<T>,
 ) =>
 {
   const mode = options.mode ?? 'display';
@@ -246,6 +275,29 @@ export const TableView = <T extends Record<string, string | number | boolean>>(
       return; // Consume the keypress
     }
 
+    // Call custom key handler first if provided
+    if (options.customKeyHandler)
+    {
+      const selectedRow = data.rows[highlightedIndex];
+      if (!selectedRow) return;
+
+      const result = options.customKeyHandler(input, key, selectedRow);
+      console.log(input, key, selectedRow);
+      if (result.handled)
+      {
+        if (result.action === 'select' && onSelect)
+        {
+          onSelect(selectedRow);
+          return; // consume keypress
+        }
+        if (result.action === 'navigate' && onNavigate)
+        {
+          onNavigate(selectedRow);
+          return; // consume keypress
+        }
+      }
+    }
+
     // Handle Escape
     if (key.escape && onCancel && mode !== 'display')
     {
@@ -409,7 +461,7 @@ export const TableView = <T extends Record<string, string | number | boolean>>(
   if (!data)
   {
     return (
-      <Box flexDirection="column">
+      <Box flexDirection='column'>
         <Text dimColor>Loading...</Text>
       </Box>
     );
@@ -540,16 +592,14 @@ export const TableView = <T extends Record<string, string | number | boolean>>(
       const paddingLines = Math.max(0, minHeight - errorLines.length);
 
       return (
-        <Box flexDirection="column" marginTop={1} borderStyle="bold" borderColor="red" paddingX={1}>
-          <Box flexDirection="column" backgroundColor="red">
-            <Text bold color="black">
-              ⚠️  {errorMessage}
+        <Box flexDirection='column' marginTop={1} borderStyle='bold' borderColor='red' paddingX={1}>
+          <Box flexDirection='column' backgroundColor='red'>
+            <Text bold color='black'>
+              ⚠️ {errorMessage}
             </Text>
           </Box>
           {/* Add padding lines to maintain consistent height */}
-          {Array.from({ length: paddingLines }).map((_, i) => (
-            <Text key={`error-padding-${i}`}> </Text>
-          ))}
+          {Array.from({ length: paddingLines }).map((_, i) => <Text key={`error-padding-${i}`}></Text>)}
           <Box marginTop={1}>
             <Text dimColor italic>
               Press any key to dismiss
@@ -564,14 +614,12 @@ export const TableView = <T extends Record<string, string | number | boolean>>(
     const paddingLines = maxHelpTextLines - currentLines.length;
 
     return (
-      <Box flexDirection="column" marginTop={1} borderStyle="single" borderColor="gray" paddingX={1}>
+      <Box flexDirection='column' marginTop={1} borderStyle='single' borderColor='gray' paddingX={1}>
         {currentHelpText
           ? <Text dimColor>{currentHelpText}</Text>
           : <Text dimColor italic>No help text available</Text>}
         {/* Add empty lines to maintain fixed height */}
-        {Array.from({ length: paddingLines }).map((_, i) => (
-          <Text key={`padding-${i}`}> </Text>
-        ))}
+        {Array.from({ length: paddingLines }).map((_, i) => <Text key={`padding-${i}`}></Text>)}
       </Box>
     );
   };
@@ -608,7 +656,6 @@ export const TableView = <T extends Record<string, string | number | boolean>>(
     return <Text dimColor italic>{shortcuts.join(' | ')}</Text>;
   };
 
-
   // Check if terminal is too small
   const MIN_WIDTH = 50;
   const MIN_HEIGHT = 12;
@@ -617,9 +664,9 @@ export const TableView = <T extends Record<string, string | number | boolean>>(
   if (stdout && (terminalWidth < MIN_WIDTH || terminalHeight < MIN_HEIGHT))
   {
     return (
-      <Box flexDirection="column" alignItems="center" justifyContent="center">
-        <Text bold color="red">
-          ⚠️  TERMINAL TOO SMALL
+      <Box flexDirection='column' alignItems='center' justifyContent='center'>
+        <Text bold color='red'>
+          ⚠️ TERMINAL TOO SMALL
         </Text>
         <Text dimColor>
           Minimum: {MIN_WIDTH}x{MIN_HEIGHT} | Current: {terminalWidth}x{terminalHeight}
@@ -673,11 +720,11 @@ export const TableView = <T extends Record<string, string | number | boolean>>(
   }
 
   return (
-    <Box flexDirection="column">
+    <Box flexDirection='column'>
       {/* Title */}
       {options.title && (
         <Box marginBottom={1}>
-          <Text bold color="cyan">
+          <Text bold color='cyan'>
             {options.title}
           </Text>
         </Box>
@@ -685,10 +732,10 @@ export const TableView = <T extends Record<string, string | number | boolean>>(
 
       {/* Table Header */}
       <Box>
-        {mode === 'select-multi' && <Text dimColor>   </Text>}
+        {mode === 'select-multi' && <Text dimColor></Text>}
         {data.columns.map((col, idx) => (
           <Box key={col.key} width={columnWidths[col.key]} marginRight={idx < data.columns.length - 1 ? 2 : 0}>
-            <Text bold color="blue">
+            <Text bold color='blue'>
               {formatCell(col.label, col)}
             </Text>
           </Box>
@@ -715,10 +762,10 @@ export const TableView = <T extends Record<string, string | number | boolean>>(
       {/* Table Rows (viewport) */}
       {data.rows.length === 0
         ? (
-            <Box>
-              <Text dimColor italic>No data to display</Text>
-            </Box>
-          )
+          <Box>
+            <Text dimColor italic>No data to display</Text>
+          </Box>
+        )
         : visibleRows.map((row, viewportIdx) =>
         {
           const rowIdx = scrollTop + viewportIdx;

@@ -1,10 +1,11 @@
 #!/usr/bin/env bun
 
-import React from 'react';
 import { render } from 'ink';
+import React from 'react';
 import type { IOContext } from './IOContext';
 import { Op } from './Op';
-import { TableView } from './ShowTableOp.ui';
+import type { Failure, Success } from './Outcome';
+import { type CustomKeyHandler, TableView } from './ShowTableOp.ui';
 
 /**
  Table column configuration
@@ -84,8 +85,23 @@ export type TableData<T = Record<string, string | number | boolean>> = {
 /**
  Function that provides table data (for dynamic/polling scenarios)
  */
-export type TableDataProvider<T = Record<string, string | number | boolean>> =
-  () => TableData<T> | Promise<TableData<T>>;
+export type TableDataProvider<T = Record<string, string | number | boolean>> = () => TableData<T> | Promise<
+  TableData<T>
+>;
+
+/**
+ Success result from ShowTableOp - discriminated union for type-safe exhaustive checking
+ */
+export type ShowTableOpSuccess<T> =
+  | { type: 'display-closed' }
+  | { type: 'row-selected'; row: TableRow<T> }
+  | { type: 'rows-selected'; rows: TableRow<T>[] }
+  | { type: 'navigate'; row: TableRow<T> };
+
+/**
+ Failure types from ShowTableOp
+ */
+export type ShowTableOpFailure = 'canceled' | 'unknownError';
 
 /**
  Table display/interaction mode
@@ -130,6 +146,11 @@ export type ShowTableOpOptions<T = Record<string, string | number | boolean>> = 
    Fill terminal height by adding spacer (naturally pushes old content up, default: true)
    */
   fillHeight?: boolean;
+
+  /**
+   Custom key handler for additional keyboard shortcuts
+   */
+  customKeyHandler?: CustomKeyHandler<T>;
 };
 
 /**
@@ -142,10 +163,11 @@ export type ShowTableOpOptions<T = Record<string, string | number | boolean>> = 
 
  Can display static data or dynamic data via a polling callback.
 
- Success value:
- - `display` mode: void
- - `select-row` mode: The selected row
- - `select-multi` mode: Array of selected rows
+ Success value: Discriminated union `ShowTableOpSuccess<T>`:
+ - `{ type: 'display-closed' }` - Display mode exited
+ - `{ type: 'row-selected', row }` - Single row selected
+ - `{ type: 'rows-selected', rows }` - Multiple rows selected
+ - `{ type: 'navigate', row }` - Navigation action (e.g., right arrow into directory)
 
  Failure: 'canceled' | 'unknownError'
 
@@ -222,7 +244,7 @@ export type ShowTableOpOptions<T = Record<string, string | number | boolean>> = 
  }
  ```
  */
-export class ShowTableOp<T = Record<string, string | number | boolean>> extends Op
+export class ShowTableOp<T extends Record<string, string | number | boolean>> extends Op
 {
   name = 'ShowTableOp';
 
@@ -231,34 +253,39 @@ export class ShowTableOp<T = Record<string, string | number | boolean>> extends 
     super();
   }
 
-  async run(io?: IOContext)
+  // Explicit return type needed: Op base class has abstract run(): Promise<Success<unknown> | Failure<unknown>>
+  // Without this annotation, consumers see 'unknown' → 'never' after narrowing
+  async run(io?: IOContext): Promise<Success<ShowTableOpSuccess<T>> | Failure<ShowTableOpFailure>>
   {
     const ioContext = this.getIO(io);
     const mode = this.options.mode ?? 'display';
 
-    type SingleRowResult = TableRow<T>;
-    type MultiRowResult = TableRow<T>[];
-
-    let result: SingleRowResult | MultiRowResult | 'canceled' | 'display-closed' | null = null;
+    let result: ShowTableOpSuccess<T> | 'canceled' | null = null;
 
     const { unmount, waitUntilExit } = render(
       <TableView
-        options={this.options as ShowTableOpOptions}
+        options={this.options}
         errorMessage={this.options.errorMessage}
         logger={ioContext.logger}
+        onNavigate={(row: TableRow<T>) =>
+        {
+          this.log(io, `Navigated to row: ${JSON.stringify(row.data)}`);
+          result = { type: 'navigate', row };
+          unmount();
+        }}
         onSelect={mode === 'select-row'
-          ? (row: TableRow) =>
+          ? (row: TableRow<T>) =>
           {
             this.log(io, `Selected row: ${JSON.stringify(row.data)}`);
-            result = row as unknown as SingleRowResult;
+            result = { type: 'row-selected', row };
             unmount();
           }
           : undefined}
         onSelectMulti={mode === 'select-multi'
-          ? (rows: TableRow[]) =>
+          ? (rows: TableRow<T>[]) =>
           {
             this.log(io, `Selected ${rows.length} rows`);
-            result = rows as unknown as MultiRowResult;
+            result = { type: 'rows-selected', rows };
             unmount();
           }
           : undefined}
@@ -274,21 +301,21 @@ export class ShowTableOp<T = Record<string, string | number | boolean>> extends 
           ? () =>
           {
             this.log(io, 'Table display closed');
-            result = 'display-closed';
+            result = { type: 'display-closed' };
             unmount();
           }
           : undefined}
       />,
       {
-        stdin: ioContext.stdin as any,
-        stdout: ioContext.stdout as any,
+        stdin: ioContext.stdin as NodeJS.ReadStream,
+        stdout: ioContext.stdout as NodeJS.WriteStream,
         // exitOnCtrlC defaults to true - let Ink handle Ctrl-C and terminate
       },
     );
 
     await waitUntilExit();
 
-    // Handle outcomes based on mode
+    // Handle outcomes based on result type
     if (result === null)
     {
       return this.failWithUnknownError('No result from table view');
@@ -299,24 +326,8 @@ export class ShowTableOp<T = Record<string, string | number | boolean>> extends 
       return this.cancel();
     }
 
-    if (result === 'display-closed')
-    {
-      return this.succeed(undefined as unknown as T);
-    }
-
-    // Type-safe result handling
-    if (mode === 'select-row')
-    {
-      return this.succeed(result as SingleRowResult as unknown as T);
-    }
-
-    if (mode === 'select-multi')
-    {
-      return this.succeed(result as MultiRowResult as unknown as T);
-    }
-
-    // Display mode
-    return this.succeed(undefined as unknown as T);
+    // TypeScript has narrowed result to ShowTableOpSuccess<T> via control flow analysis
+    return this.succeed(result);
   }
 }
 
@@ -397,8 +408,16 @@ if (import.meta.main)
   const selectResult = await selectOp.run();
   if (selectResult.ok)
   {
-    const selected = selectResult.value as unknown as TableRow;
-    console.log('✅ Selected:', selected.data.option, '\n');
+    // Use the discriminated union type
+    const result = selectResult.value;
+    if (result.type === 'row-selected')
+    {
+      console.log('✅ Selected:', result.row.data.option, '\n');
+    }
+    else
+    {
+      console.log('⚠️ Unexpected result type:', result.type, '\n');
+    }
   }
   else if (selectResult.failure === 'canceled')
   {
@@ -449,8 +468,16 @@ if (import.meta.main)
   const multiResult = await multiSelectOp.run();
   if (multiResult.ok)
   {
-    const selected = multiResult.value as unknown as TableRow[];
-    console.log('✅ Selected items:', selected.map((r) => r.data.item).join(', '), '\n');
+    // Use the discriminated union type
+    const result = multiResult.value;
+    if (result.type === 'rows-selected')
+    {
+      console.log('✅ Selected items:', result.rows.map((r) => r.data.item).join(', '), '\n');
+    }
+    else
+    {
+      console.log('⚠️ Unexpected result type:', result.type, '\n');
+    }
   }
   else if (multiResult.failure === 'canceled')
   {

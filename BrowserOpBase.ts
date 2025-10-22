@@ -37,7 +37,7 @@ export abstract class BrowserOpBase<
    */
   async run(
     io?: IOContext,
-  ): Promise<{ ok: true; value: TSuccessValue } | { ok: false; failure: TFailureType; debugData?: unknown }>
+  ): Promise<{ ok: true; value: TSuccessValue } | { ok: false; failure: TFailureType; debugData?: string }>
   {
     // Optional hook for subclasses (e.g., S3 credentials)
     const setupResult = await this.beforeRun(io);
@@ -83,8 +83,23 @@ export abstract class BrowserOpBase<
         title,
         errorMessage: errorMsg,
         fillHeight: true,
-      });
+        customKeyHandler: (input, key, currentRow) =>
+        {
+          // Right arrow: navigate into directories
+          if (key.rightArrow)
+          {
+            const name = currentRow.data.name as string;
+            const entry = entries.find((e) => this.getEntryName(e) === name);
 
+            if (entry && this.isDirectory(entry))
+            {
+              return { handled: true, action: 'navigate', row: currentRow };
+            }
+          }
+
+          return { handled: false };
+        },
+      });
       const tableResult = await tableOp.run(io);
 
       // Clear error after showing it once
@@ -96,98 +111,93 @@ export abstract class BrowserOpBase<
         return tableResult as never;
       }
 
-      // Handle selection based on mode
-      const selected = tableResult.value as unknown as TableRow<{
-        icon: string;
-        name: string;
-        size: string;
-        modified: string;
-        type: string;
-      }> | TableRow<{
-        icon: string;
-        name: string;
-        size: string;
-        modified: string;
-        type: string;
-      }>[];
+      // Handle selection with proper discriminated union type checking
+      const result = tableResult.value;
 
-      if (isMultiSelect)
+      switch (result.type)
       {
-        // Multi-select mode - validate and return selected entries
-        const result = this.handleMultiSelect(
-          selected as TableRow<{
-            icon: string;
-            name: string;
-            size: string;
-            modified: string;
-            type: string;
-          }>[],
-          entries,
-          selectionMode,
-        );
+        case 'navigate': {
+          // Navigation action from custom key handler (e.g., right arrow)
+          const name = result.row.data.name as string;
+          const entry = entries.find((e) => this.getEntryName(e) === name);
 
-        if (result.type === 'error')
-        {
-          errorMsg = result.message;
-          continue;
-        }
-
-        return this.succeed(result.value as never);
-      }
-      else
-      {
-        // Single-select mode
-        const selectedRow = selected as TableRow<{
-          icon: string;
-          name: string;
-          size: string;
-          modified: string;
-          type: string;
-        }>;
-
-        const name = selectedRow.data.name;
-
-        // Handle special ".." entry
-        if (name === '..')
-        {
-          this.navigateUp();
-          continue;
-        }
-
-        const entry = entries.find((e) => this.getEntryName(e) === name);
-
-        if (!entry)
-        {
-          this.warn(io, 'Selected entry not found');
-          continue;
-        }
-
-        // If it's a directory, handle directory selection or navigation
-        if (this.isDirectory(entry))
-        {
-          if (this.isDirectorySelectionMode(selectionMode))
+          if (entry)
           {
-            // User wants to select this directory
-            return this.succeed(entry as never);
-          }
-          else
-          {
-            // Descend into directory
             this.navigateInto(entry);
+          }
+          continue;
+        }
+
+        case 'row-selected': {
+          // Single row selected with Enter key
+          const name = result.row.data.name as string;
+
+          // Handle special ".." entry
+          if (name === '..')
+          {
+            this.navigateUp();
             continue;
           }
+
+          const entry = entries.find((e) => this.getEntryName(e) === name);
+
+          if (!entry)
+          {
+            this.warn(io, 'Selected entry not found');
+            continue;
+          }
+
+          // If it's a directory, handle directory selection or navigation
+          if (this.isDirectory(entry))
+          {
+            if (this.isDirectorySelectionMode(selectionMode))
+            {
+              // User wants to select this directory
+              return this.succeed(entry as never);
+            }
+            else
+            {
+              // Descend into directory
+              this.navigateInto(entry);
+              continue;
+            }
+          }
+
+          // It's a file or other entry - validate and return
+          const isValid = this.validateSingleSelection(entry, selectionMode);
+
+          if (!isValid)
+          {
+            errorMsg = this.getValidationMessage(selectionMode);
+            continue;
+          }
+
+          return this.succeed(entry as never);
         }
 
-        // It's a file or other entry - validate and return
-        const isValid = this.validateSingleSelection(entry, selectionMode);
+        case 'rows-selected': {
+          // Multi-select mode - validate and return selected entries
+          const validationResult = this.handleMultiSelect(
+            result.rows,
+            entries,
+            selectionMode,
+          );
 
-        if (!isValid)
-        {
-          errorMsg = this.getValidationMessage(selectionMode);
+          if (validationResult.type === 'error')
+          {
+            errorMsg = validationResult.message;
+            continue;
+          }
+
+          return this.succeed(validationResult.value as never);
+        }
+
+        case 'display-closed': {
+          // This shouldn't happen in browser context, but TypeScript forces us to handle it
+          // This is GOOD - it's exhaustive checking!
+          this.warn(io, 'Display closed in browser mode - unexpected');
           continue;
         }
-
-        return this.succeed(entry as never);
       }
     }
   }
@@ -200,7 +210,7 @@ export abstract class BrowserOpBase<
    */
   protected abstract fetchListing(io?: IOContext): Promise<
     | { ok: true; value: TListing }
-    | { ok: false; failure: TFailureType; debugData?: unknown }
+    | { ok: false; failure: TFailureType; debugData?: string }
   >;
 
   /**
@@ -273,9 +283,10 @@ export abstract class BrowserOpBase<
    */
   protected async beforeRun(
     _io?: IOContext,
-  ): Promise<{ ok: false; failure: TFailureType; debugData?: unknown } | void>
+  ): Promise<{ ok: false; failure: TFailureType; debugData?: string } | void>
   {
     // Default: no setup needed
+    await Promise.resolve();
     return undefined;
   }
 
@@ -312,13 +323,7 @@ export abstract class BrowserOpBase<
    * Returns either error message or selected entries
    */
   protected handleMultiSelect(
-    selectedRows: TableRow<{
-      icon: string;
-      name: string;
-      size: string;
-      modified: string;
-      type: string;
-    }>[],
+    selectedRows: TableRow[],
     entries: TEntry[],
     selectionMode: TSelectionMode,
   ):

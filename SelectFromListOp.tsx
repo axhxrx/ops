@@ -153,8 +153,8 @@ export class SelectFromListOp<OptionsT extends readonly SelectOption[]> extends 
         onKeystroke={this.config.onKeystroke}
       />,
       {
-        stdin: ioContext.stdin as any,
-        stdout: ioContext.stdout as any,
+        stdin: ioContext.stdin as NodeJS.ReadStream,
+        stdout: ioContext.stdout as NodeJS.WriteStream,
       },
     );
 
