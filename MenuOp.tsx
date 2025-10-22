@@ -1,11 +1,11 @@
 #!/usr/bin/env bun
 
-import { render } from 'ink';
 import chalk from 'chalk';
+import { render } from 'ink';
 import type { IOContext } from './IOContext';
-import { Op } from './Op';
-import type { Menu } from './MenuPrimitives';
 import { MenuView } from './MenuOp.ui';
+import type { Menu } from './MenuPrimitives';
+import { Op } from './Op';
 
 /**
  * MenuOp - Rich, type-safe menu with auto-layout and keyboard shortcuts
@@ -73,20 +73,18 @@ export class MenuOp<T extends string> extends Op
           selectedValue = value;
           unmount();
         }}
-        onCancel={
-          this.options.cancelable
-            ? () =>
-            {
-              this.log(io, 'Canceled');
-              wasCanceled = true;
-              unmount();
-            }
-            : undefined
-        }
+        onCancel={this.options.cancelable
+          ? () =>
+          {
+            this.log(io, 'Canceled');
+            wasCanceled = true;
+            unmount();
+          }
+          : undefined}
       />,
       {
-        stdin: ioContext.stdin as any,
-        stdout: ioContext.stdout as any,
+        stdin: ioContext.stdin as NodeJS.ReadStream,
+        stdout: ioContext.stdout as NodeJS.WriteStream,
       },
     );
 
@@ -151,38 +149,37 @@ if (import.meta.main)
 
   if (shouldRun(1))
   {
+    const menu1 = Menu.create(
+      MenuItem.create('new' as const)
+        .label('[N]ew manifest')
+        .help('create new manifest'),
+      MenuItem.create('local' as const)
+        .label('[L]ocal manifest')
+        .help('load from local filesystem'),
+      MenuItem.create('remote' as const)
+        .label('[R]emote manifest')
+        .help('load from S3-compatible store'),
+      MenuItem.create('url' as const)
+        .label('[U]RL manifest')
+        .help('load from URL'),
+    )
+      .header(InfoPanel.text('No manifest loaded'))
+      .footer(InfoPanel.columns('466.7 kWh', 'foo hoge bar', '39.3MB'));
 
-  const menu1 = Menu.create(
-    MenuItem.create('new' as const)
-      .label('[N]ew manifest')
-      .help('create new manifest'),
-    MenuItem.create('local' as const)
-      .label('[L]ocal manifest')
-      .help('load from local filesystem'),
-    MenuItem.create('remote' as const)
-      .label('[R]emote manifest')
-      .help('load from S3-compatible store'),
-    MenuItem.create('url' as const)
-      .label('[U]RL manifest')
-      .help('load from URL'),
-  )
-    .header(InfoPanel.text('No manifest loaded'))
-    .footer(InfoPanel.columns('466.7 kWh', 'foo hoge bar', '39.3MB'));
+    const op1 = new MenuOp(menu1, { cancelable: true });
+    const result1 = await op1.run();
 
-  const op1 = new MenuOp(menu1, { cancelable: true });
-  const result1 = await op1.run();
+    if (result1.ok)
+    {
+      const selected: string = result1.value;
+      console.log(`\n✅ Selected: ${selected}`);
+    }
+    else if (result1.failure === 'canceled')
+    {
+      console.log('\n🚫 Canceled');
+    }
 
-  if (result1.ok)
-  {
-    const selected: string = result1.value;
-    console.log(`\n✅ Selected: ${selected}`);
-  }
-  else if (result1.failure === 'canceled')
-  {
-    console.log('\n🚫 Canceled');
-  }
-
-  console.log('\n' + '='.repeat(80) + '\n');
+    console.log('\n' + '='.repeat(80) + '\n');
   }
 
   // Example 2: Menu with multi-line header and reactive content
@@ -190,54 +187,53 @@ if (import.meta.main)
 
   if (shouldRun(2))
   {
+    // Simulate dynamic status
+    let buildStatus: 'Idle' | 'Building' | 'Complete' = 'Building';
 
-  // Simulate dynamic status
-  let buildStatus: 'Idle' | 'Building' | 'Complete' = 'Building';
-
-  const menu2 = Menu.create(
-    MenuItem.create('build' as const)
-      .label('[B]uild')
-      .help('start build process'),
-    MenuItem.create('deploy' as const)
-      .label('[D]eploy')
-      .help('deploy to production'),
-    MenuItem.create('test' as const)
-      .label('[T]est')
-      .help('run test suite'),
-    MenuItem.create('cancel' as const)
-      .label('[C]ancel')
-      .help('cancel operation'),
-  )
-    .header(
-      InfoPanel.lines(
-        () => `My test manifest.vmnfst                     ${chalk.yellow(`[${buildStatus}]`)}`,
-        'Source: /Volumes/4TB/test-data/Toyota001/*',
-        () => `Docs: 137   Size: 14.MB  Strategy: serial-001 (Claude)`,
-      ),
+    const menu2 = Menu.create(
+      MenuItem.create('build' as const)
+        .label('[B]uild')
+        .help('start build process'),
+      MenuItem.create('deploy' as const)
+        .label('[D]eploy')
+        .help('deploy to production'),
+      MenuItem.create('test' as const)
+        .label('[T]est')
+        .help('run test suite'),
+      MenuItem.create('cancel' as const)
+        .label('[C]ancel')
+        .help('cancel operation'),
     )
-    .footer(InfoPanel.columns('466.7 kWh', 'foo hoge bar', '39.3MB'));
+      .header(
+        InfoPanel.lines(
+          () => `My test manifest.vmnfst                     ${chalk.yellow(`[${buildStatus}]`)}`,
+          'Source: /Volumes/4TB/test-data/Toyota001/*',
+          () => `Docs: 137   Size: 14.MB  Strategy: serial-001 (Claude)`,
+        ),
+      )
+      .footer(InfoPanel.columns('466.7 kWh', 'foo hoge bar', '39.3MB'));
 
-  const op2 = new MenuOp(menu2, { cancelable: true });
+    const op2 = new MenuOp(menu2, { cancelable: true });
 
-  // Update status to demonstrate reactivity
-  setTimeout(() =>
-  {
-    buildStatus = 'Complete';
-  }, 2000);
+    // Update status to demonstrate reactivity
+    setTimeout(() =>
+    {
+      buildStatus = 'Complete';
+    }, 2000);
 
-  const result2 = await op2.run();
+    const result2 = await op2.run();
 
-  if (result2.ok)
-  {
-    const selected: string = result2.value;
-    console.log(`\n✅ Selected: ${selected}`);
-  }
-  else if (result2.failure === 'canceled')
-  {
-    console.log('\n🚫 Canceled');
-  }
+    if (result2.ok)
+    {
+      const selected: string = result2.value;
+      console.log(`\n✅ Selected: ${selected}`);
+    }
+    else if (result2.failure === 'canceled')
+    {
+      console.log('\n🚫 Canceled');
+    }
 
-  console.log('\n' + '='.repeat(80) + '\n');
+    console.log('\n' + '='.repeat(80) + '\n');
   }
 
   // Example 3: Menu with chalk styling
@@ -245,39 +241,38 @@ if (import.meta.main)
 
   if (shouldRun(3))
   {
+    const menu3 = Menu.create(
+      MenuItem.create('danger' as const)
+        .label(chalk.red('[D]') + 'angerous action')
+        .help(chalk.dim('⚠️  This cannot be undone!')),
+      MenuItem.create('safe' as const)
+        .label(chalk.green('[S]') + 'afe action')
+        .help(chalk.dim('✓ Reversible operation')),
+      MenuItem.create('info' as const)
+        .label(chalk.blue('[I]') + 'nfo')
+        .help(chalk.dim('View information only')),
+    )
+      .header(InfoPanel.text(chalk.bgBlue.white.bold(' System Operations ')))
+      .footer(InfoPanel.columns(
+        chalk.dim('Status: ') + chalk.green('OK'),
+        chalk.dim('User: ') + chalk.cyan('admin'),
+        chalk.dim('Time: ') + chalk.yellow('14:32'),
+      ));
 
-  const menu3 = Menu.create(
-    MenuItem.create('danger' as const)
-      .label(chalk.red('[D]') + 'angerous action')
-      .help(chalk.dim('⚠️  This cannot be undone!')),
-    MenuItem.create('safe' as const)
-      .label(chalk.green('[S]') + 'afe action')
-      .help(chalk.dim('✓ Reversible operation')),
-    MenuItem.create('info' as const)
-      .label(chalk.blue('[I]') + 'nfo')
-      .help(chalk.dim('View information only')),
-  )
-    .header(InfoPanel.text(chalk.bgBlue.white.bold(' System Operations ')))
-    .footer(InfoPanel.columns(
-      chalk.dim('Status: ') + chalk.green('OK'),
-      chalk.dim('User: ') + chalk.cyan('admin'),
-      chalk.dim('Time: ') + chalk.yellow('14:32'),
-    ));
+    const op3 = new MenuOp(menu3, { cancelable: true });
+    const result3 = await op3.run();
 
-  const op3 = new MenuOp(menu3, { cancelable: true });
-  const result3 = await op3.run();
+    if (result3.ok)
+    {
+      const selected: string = result3.value;
+      console.log(`\n✅ Selected: ${selected}`);
+    }
+    else if (result3.failure === 'canceled')
+    {
+      console.log('\n🚫 Canceled');
+    }
 
-  if (result3.ok)
-  {
-    const selected: string = result3.value;
-    console.log(`\n✅ Selected: ${selected}`);
-  }
-  else if (result3.failure === 'canceled')
-  {
-    console.log('\n🚫 Canceled');
-  }
-
-  console.log('\n' + '='.repeat(80) + '\n');
+    console.log('\n' + '='.repeat(80) + '\n');
   }
 
   // Example 4: Demonstrate type safety
@@ -285,35 +280,34 @@ if (import.meta.main)
 
   if (shouldRun(4))
   {
+    const menu4 = Menu.create(
+      MenuItem.create('option1' as const).label('[1] First option'),
+      MenuItem.create('option2' as const).label('[2] Second option'),
+      MenuItem.create('option3' as const).label('[3] Third option'),
+    );
 
-  const menu4 = Menu.create(
-    MenuItem.create('option1' as const).label('[1] First option'),
-    MenuItem.create('option2' as const).label('[2] Second option'),
-    MenuItem.create('option3' as const).label('[3] Third option'),
-  );
+    const op4 = new MenuOp(menu4);
+    const result4 = await op4.run();
 
-  const op4 = new MenuOp(menu4);
-  const result4 = await op4.run();
-
-  if (result4.ok)
-  {
-    // TypeScript knows result4.value is 'option1' | 'option2' | 'option3'
-    switch (result4.value)
+    if (result4.ok)
     {
-      case 'option1':
-        console.log('\n✅ You selected option 1');
-        break;
-      case 'option2':
-        console.log('\n✅ You selected option 2');
-        break;
-      case 'option3':
-        console.log('\n✅ You selected option 3');
-        break;
-      // TypeScript will error if we forget a case or use invalid value
+      // TypeScript knows result4.value is 'option1' | 'option2' | 'option3'
+      switch (result4.value)
+      {
+        case 'option1':
+          console.log('\n✅ You selected option 1');
+          break;
+        case 'option2':
+          console.log('\n✅ You selected option 2');
+          break;
+        case 'option3':
+          console.log('\n✅ You selected option 3');
+          break;
+          // TypeScript will error if we forget a case or use invalid value
+      }
     }
-  }
 
-  console.log('\n' + '='.repeat(80) + '\n');
+    console.log('\n' + '='.repeat(80) + '\n');
   }
 
   // Example 5: Split-pane mode with details panel
@@ -321,78 +315,80 @@ if (import.meta.main)
 
   if (shouldRun(5))
   {
+    // Create a simple file logger for debugging
+    // const fs = await import('fs');
+    // const logFile = '/tmp/menuop-debug.log';
+    // const fileLogger = {
+    //   log: (message: string) =>
+    //   {
+    //     fs.appendFileSync(logFile, message + '\n');
+    //   },
+    // };
+    // // Clear log file
+    // fs.writeFileSync(logFile, '=== MenuOp Debug Log ===\n');
 
-  // Create a simple file logger for debugging
-  // const fs = await import('fs');
-  // const logFile = '/tmp/menuop-debug.log';
-  // const fileLogger = {
-  //   log: (message: string) =>
-  //   {
-  //     fs.appendFileSync(logFile, message + '\n');
-  //   },
-  // };
-  // // Clear log file
-  // fs.writeFileSync(logFile, '=== MenuOp Debug Log ===\n');
-
-  const menu5 = Menu.create(
-    MenuItem.create('vegetables' as const)
-      .label('[V]egetables')
-      .help('Configure vegetable settings')
-      .details([
-        ['Setting', 'Value'],
-        ['Enabled', 'Yes'],
-        ['Count', '42'],
-        ['Quality', 'Premium'],
-        ['Source', 'Local Farm'],
-      ]),
-    MenuItem.create('fruits' as const)
-      .label('[F]ruits')
-      .help('Configure fruit preferences')
-      .details('Fresh fruits are sourced from local orchards. All items are organic and pesticide-free. Available year-round with seasonal varieties.'),
-    MenuItem.create('grains' as const)
-      .label('[G]rains')
-      .help('Grain and cereal options')
-      .details(
-        InfoPanel.lines(
-          '🌾 Grain Settings',
-          '',
-          ['Type', 'Whole Grain'],
-          ['Gluten-free', 'Available'],
-          ['Organic', 'Yes'],
+    const menu5 = Menu.create(
+      MenuItem.create('vegetables' as const)
+        .label('[V]egetables')
+        .help('Configure vegetable settings')
+        .details([
+          ['Setting', 'Value'],
+          ['Enabled', 'Yes'],
+          ['Count', '42'],
+          ['Quality', 'Premium'],
+          ['Source', 'Local Farm'],
+        ]),
+      MenuItem.create('fruits' as const)
+        .label('[F]ruits')
+        .help('Configure fruit preferences')
+        .details(
+          'Fresh fruits are sourced from local orchards. All items are organic and pesticide-free. Available year-round with seasonal varieties.',
         ),
-      ),
-    MenuItem.create('dairy' as const)
-      .label('[D]airy')
-      .help('Dairy products and alternatives')
-      .details(() =>
-        InfoPanel.lines(
-          '🥛 Dairy Options',
-          '',
-          `Updated: ${new Date().toLocaleTimeString()}`,
-          '',
-          ['Milk', 'Whole, 2%, Skim'],
-          ['Cheese', 'Variety Pack'],
-          ['Yogurt', 'Greek, Regular'],
-        )),
-  )
-    .header(InfoPanel.text('Food Category Settings'))
-    .footer(InfoPanel.columns('Split-pane demo', 'Arrow keys to navigate', 'Esc to cancel'))
-    .detailsMinWidth(40); // Details pane gets at least 40% width
+      MenuItem.create('grains' as const)
+        .label('[G]rains')
+        .help('Grain and cereal options')
+        .details(
+          InfoPanel.lines(
+            '🌾 Grain Settings',
+            '',
+            ['Type', 'Whole Grain'],
+            ['Gluten-free', 'Available'],
+            ['Organic', 'Yes'],
+          ),
+        ),
+      MenuItem.create('dairy' as const)
+        .label('[D]airy')
+        .help('Dairy products and alternatives')
+        .details(() =>
+          InfoPanel.lines(
+            '🥛 Dairy Options',
+            '',
+            `Updated: ${new Date().toLocaleTimeString()}`,
+            '',
+            ['Milk', 'Whole, 2%, Skim'],
+            ['Cheese', 'Variety Pack'],
+            ['Yogurt', 'Greek, Regular'],
+          )
+        ),
+    )
+      .header(InfoPanel.text('Food Category Settings'))
+      .footer(InfoPanel.columns('Split-pane demo', 'Arrow keys to navigate', 'Esc to cancel'))
+      .detailsMinWidth(40); // Details pane gets at least 40% width
 
-  const op5 = new MenuOp(menu5, { cancelable: true });
-  const result5 = await op5.run(/* { logger: fileLogger } */);
+    const op5 = new MenuOp(menu5, { cancelable: true });
+    const result5 = await op5.run(/* { logger: fileLogger } */);
 
-  if (result5.ok)
-  {
-    const selected: string = result5.value;
-    console.log(`\n✅ Selected: ${selected}`);
-  }
-  else if (result5.failure === 'canceled')
-  {
-    console.log('\n🚫 Canceled');
-  }
+    if (result5.ok)
+    {
+      const selected: string = result5.value;
+      console.log(`\n✅ Selected: ${selected}`);
+    }
+    else if (result5.failure === 'canceled')
+    {
+      console.log('\n🚫 Canceled');
+    }
 
-  console.log('\n' + '='.repeat(80) + '\n');
+    console.log('\n' + '='.repeat(80) + '\n');
   }
 
   // Final summary

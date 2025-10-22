@@ -1,5 +1,5 @@
 import { Box, Text, useInput, useStdout } from 'ink';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import type { Logger } from './Logger';
 import type { InfoPanel, LineContent, Menu, MenuItem } from './MenuPrimitives';
 
@@ -514,7 +514,7 @@ export const MenuView = <T extends string>({
               contentAreaHeight -= 1; // Subtract 1 for safety
 
               const detailsLines = currentDetails ? currentDetails.resolve() : [];
-              const allLines: JSX.Element[] = [];
+              const allLines: React.JSX.Element[] = [];
 
               // Log for debugging
               // if (typeof logger !== 'undefined' && logger)
