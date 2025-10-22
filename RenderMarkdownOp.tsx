@@ -79,8 +79,8 @@ export class RenderMarkdownOp extends Op
         }}
       />,
       {
-        stdin: ioContext.stdin as any,
-        stdout: ioContext.stdout as any,
+        stdin: ioContext.stdin as NodeJS.ReadStream,
+        stdout: ioContext.stdout as NodeJS.WriteStream,
       },
     );
 

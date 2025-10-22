@@ -2,7 +2,7 @@
  Framework-level arguments for OpRunner
  */
 export type OpRunnerArgs = {
-  mode: 'interactive' | 'record' | 'replay';
+  mode: 'interactive' | 'record' | 'replay' | 'test';
   sessionFile?: string;
   logFile?: string;
 };

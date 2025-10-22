@@ -1,7 +1,7 @@
 import { render } from 'ink';
+import { TextInputComponent } from './InputTextOp.ui';
 import type { IOContext } from './IOContext';
 import { Op } from './Op';
-import { TextInputComponent } from './InputTextOp.ui';
 
 /**
  Options for InputTextOp
@@ -131,20 +131,18 @@ export class InputTextOp extends Op
           resultValue = value;
           unmount();
         }}
-        onCancel={
-          this.options.cancelable
-            ? () =>
-            {
-              this.log(io, 'Canceled');
-              wasCanceled = true;
-              unmount();
-            }
-            : undefined
-        }
+        onCancel={this.options.cancelable
+          ? () =>
+          {
+            this.log(io, 'Canceled');
+            wasCanceled = true;
+            unmount();
+          }
+          : undefined}
       />,
       {
-        stdin: ioContext.stdin as any,
-        stdout: ioContext.stdout as any,
+        stdin: ioContext.stdin as NodeJS.ReadStream,
+        stdout: ioContext.stdout as NodeJS.WriteStream,
       },
     );
 

@@ -1,12 +1,12 @@
 #!/usr/bin/env bun
 
+import { render } from 'ink';
 import { readFile } from 'node:fs/promises';
 import { extname } from 'node:path';
-import { render } from 'ink';
+import { FilePreview } from './FilePreviewOp.ui';
 import type { IOContext } from './IOContext';
 import { Op } from './Op';
 import { RenderMarkdownOp } from './RenderMarkdownOp';
-import { FilePreview } from './FilePreviewOp.ui';
 
 /**
  Options for FilePreviewOp
@@ -149,7 +149,8 @@ export class FilePreviewOp extends Op
       const language = codeLanguageMap[ext];
       if (language)
       {
-        const wrappedContent = `# ${this.filePath}\n\n\`\`\`${language}\n${content}\n\`\`\`\n\n*Press any key to continue...*`;
+        const wrappedContent =
+          `# ${this.filePath}\n\n\`\`\`${language}\n${content}\n\`\`\`\n\n*Press any key to continue...*`;
         const markdownOp = new RenderMarkdownOp(wrappedContent);
         return this.succeed(markdownOp);
       }
@@ -171,8 +172,8 @@ export class FilePreviewOp extends Op
           }}
         />,
         {
-          stdin: ioContext.stdin as any,
-          stdout: ioContext.stdout as any,
+          stdin: ioContext.stdin as NodeJS.ReadStream,
+          stdout: ioContext.stdout as NodeJS.WriteStream,
         },
       );
 

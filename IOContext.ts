@@ -7,12 +7,12 @@ import { TeeStream } from './TeeStream';
 /**
  IO Context provides stdin/stdout streams for ops
 
- Allows switching between interactive, record, and replay modes
+ Allows switching between interactive, record, replay, and test modes
  */
 export type IOContext = {
   stdin: NodeJS.ReadStream | RecordableStdin | ReplayableStdin;
   stdout: NodeJS.WriteStream | NodeJS.WritableStream;
-  mode: 'interactive' | 'record' | 'replay';
+  mode: 'interactive' | 'record' | 'replay' | 'test';
   logger: Logger;
   // Optional: Keep reference to RecordableStdin for saving later
   recordableStdin?: RecordableStdin;

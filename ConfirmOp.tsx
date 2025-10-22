@@ -1,7 +1,7 @@
 import { render } from 'ink';
+import { ConfirmInput } from './ConfirmOp.ui';
 import type { IOContext } from './IOContext';
 import { Op } from './Op';
-import { ConfirmInput } from './ConfirmOp.ui';
 
 /**
  Options for ConfirmOp
@@ -87,8 +87,8 @@ export class ConfirmOp extends Op
           : undefined}
       />,
       {
-        stdin: ioContext.stdin as any,
-        stdout: ioContext.stdout as any,
+        stdin: ioContext.stdin as NodeJS.ReadStream,
+        stdout: ioContext.stdout as NodeJS.WriteStream,
       },
     );
 

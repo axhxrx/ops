@@ -7,8 +7,9 @@
  1. Re-run parent on cancel (specific failure)
  2. Re-run parent on any failure
  3. Re-run parent on success
- 4. Pop both parent and child (false)
- 5. Replace child with different op
+ 4. Replace child with different op based on outcome
+
+ Note: Handlers must always return an Op (usually `this` to re-run parent).
 
  Run with: bun OutcomeHandlerTest.tsx
  */
@@ -19,7 +20,7 @@ import { Op } from './Op';
 import { OpRunner } from './OpRunner';
 
 // Enable logging to see the flow
-OpRunner.opLoggingEnabled = true;
+// OpRunner.opLoggingEnabled = true; // TODO: Update OpRunner logging API
 
 /**
  Test 1: Re-run parent on cancel
@@ -42,7 +43,7 @@ class MenuOp extends Op
       stdout.write('[MenuOp] Delegating to CancelableOp (will cancel)\n');
       return this.handleOutcome(
         new CancelableOp(true), // will cancel
-        (outcome) => !outcome.ok && outcome.failure === 'canceled',
+        (_outcome) => this, // Re-run parent regardless of outcome
       );
     }
     else if (this.runCount === 2)
@@ -51,7 +52,7 @@ class MenuOp extends Op
       stdout.write('[MenuOp] Delegating to CancelableOp (will succeed)\n');
       return this.handleOutcome(
         new CancelableOp(false), // will succeed
-        (outcome) => !outcome.ok && outcome.failure === 'canceled',
+        (_outcome) => this, // Re-run parent regardless of outcome
       );
     }
     else
@@ -105,14 +106,14 @@ class RetryOnAnyFailureOp extends Op
     {
       return this.handleOutcome(
         new FailingOp('networkError'),
-        (outcome) => !outcome.ok, // re-run on ANY failure
+        (_outcome) => this, // Always re-run parent
       );
     }
     else if (this.attempts === 2)
     {
       return this.handleOutcome(
         new FailingOp('timeout'),
-        (outcome) => !outcome.ok, // re-run on ANY failure
+        (_outcome) => this, // Always re-run parent
       );
     }
     else
@@ -160,7 +161,7 @@ class RetryOnSuccessOp extends Op
     {
       return this.handleOutcome(
         new SucceedingOp(`result-${this.attempts}`),
-        (outcome) => outcome.ok, // re-run on success!
+        (_outcome) => this, // Always re-run parent
       );
     }
     else
@@ -210,10 +211,10 @@ class RouterOp extends Op
         new ChoiceOp('A'),
         (outcome) =>
         {
-          if (!outcome.ok) return true; // re-run on failure
+          if (!outcome.ok) return this; // re-run on failure
           if (outcome.value === 'A') return new ChoiceOp('B'); // route to B
           if (outcome.value === 'B') return new ChoiceOp('C'); // route to C
-          return false; // done
+          return this; // re-run parent to complete
         },
       );
     }
@@ -224,9 +225,9 @@ class RouterOp extends Op
         new ChoiceOp('C'),
         (outcome) =>
         {
-          if (!outcome.ok) return true;
-          if (outcome.value === 'C') return false; // done!
-          return false;
+          if (!outcome.ok) return this;
+          if (outcome.value === 'C') return this; // re-run parent to complete
+          return this;
         },
       );
     }

@@ -2,8 +2,8 @@
 
 import { render } from 'ink';
 import type { IOContext } from './IOContext';
-import { Op } from './Op';
 import { ModalView } from './ModalOp.ui';
+import { Op } from './Op';
 
 /**
  * ModalOp - Full-screen BRUTALIST cyberpunk modal with Matrix rain background
@@ -109,8 +109,8 @@ export class ModalOp extends Op
         }}
       />,
       {
-        stdin: ioContext.stdin as any,
-        stdout: ioContext.stdout as any,
+        stdin: ioContext.stdin as NodeJS.ReadStream,
+        stdout: ioContext.stdout as NodeJS.WriteStream,
       },
     );
 
@@ -197,12 +197,11 @@ if (import.meta.main)
   // Example 4: Long message
   const modal4 = new ModalOp({
     title: 'Terms and Conditions',
-    message:
-      'By proceeding, you agree to the following terms:\n\n' +
-      '1. All data will be encrypted using military-grade AES-256 encryption.\n' +
-      '2. Your privacy is our top priority and we will never share your data.\n' +
-      '3. You can revoke access at any time from your account settings.\n\n' +
-      'Do you accept these terms?',
+    message: 'By proceeding, you agree to the following terms:\n\n'
+      + '1. All data will be encrypted using military-grade AES-256 encryption.\n'
+      + '2. Your privacy is our top priority and we will never share your data.\n'
+      + '3. You can revoke access at any time from your account settings.\n\n'
+      + 'Do you accept these terms?',
     confirmLabel: 'Accept',
     cancelLabel: 'Decline',
   });

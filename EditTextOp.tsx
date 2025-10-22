@@ -1,12 +1,12 @@
 #!/usr/bin/env bun
 
 import { render } from 'ink';
+import { unlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { unlink } from 'node:fs/promises';
+import { EditTextInput } from './EditTextOp.ui';
 import type { IOContext } from './IOContext';
 import { Op } from './Op';
-import { EditTextInput } from './EditTextOp.ui';
 
 /**
  Options for EditTextOp
@@ -266,20 +266,18 @@ export class EditTextOp extends Op
           resultValue = value;
           unmount();
         }}
-        onCancel={
-          this.options.cancelable
-            ? () =>
-            {
-              this.log(io, 'Canceled');
-              wasCanceled = true;
-              unmount();
-            }
-            : undefined
-        }
+        onCancel={this.options.cancelable
+          ? () =>
+          {
+            this.log(io, 'Canceled');
+            wasCanceled = true;
+            unmount();
+          }
+          : undefined}
       />,
       {
-        stdin: ioContext.stdin as any,
-        stdout: ioContext.stdout as any,
+        stdin: ioContext.stdin as NodeJS.ReadStream,
+        stdout: ioContext.stdout as NodeJS.WriteStream,
       },
     );
 
