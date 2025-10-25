@@ -2,7 +2,7 @@ import { Text, useInput } from 'ink';
 import { marked } from 'marked';
 // @ts-expect-error - marked-terminal has runtime named export but no TS declarations
 import { markedTerminal } from 'marked-terminal';
-import type { Logger } from './Logger';
+import type { Logger } from './Logger.ts';
 
 /**
  Props for MarkdownRenderer component

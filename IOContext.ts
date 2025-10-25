@@ -1,8 +1,8 @@
-import type { OpRunnerArgs } from './args';
-import { createDefaultLogger, type Logger } from './Logger';
-import { RecordableStdin } from './RecordableStdin';
-import { ReplayableStdin } from './ReplayableStdin';
-import { TeeStream } from './TeeStream';
+import type { OpRunnerArgs } from './args.ts';
+import { createDefaultLogger, type Logger } from './Logger.ts';
+import { RecordableStdin } from './RecordableStdin.ts';
+import { ReplayableStdin } from './ReplayableStdin.ts';
+import { TeeStream } from './TeeStream.ts';
 
 /**
  IO Context provides stdin/stdout streams for ops

@@ -1,7 +1,7 @@
 import { Text, useInput } from 'ink';
 import TextInput from 'ink-text-input';
 import { useState } from 'react';
-import type { Logger } from './Logger';
+import type { Logger } from './Logger.ts';
 
 /**
  Props for ConfirmInput component
@@ -114,7 +114,7 @@ export const ConfirmInput = ({
 
   return (
     <>
-      {prompt && <Text>{prompt} </Text>}
+      {prompt && <Text>{prompt}</Text>}
       <TextInput
         value={value}
         placeholder={placeholder}

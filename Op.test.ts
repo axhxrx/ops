@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import type { IOContext } from './IOContext';
+import type { IOContext } from './IOContext.ts';
 import { FetchUserOp, PrintOp } from './Op.examples.ts';
 import { Op } from './Op.ts';
 import type { OutcomeOf } from './Outcome.ts';

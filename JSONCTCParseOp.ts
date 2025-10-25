@@ -1,9 +1,9 @@
 #!/usr/bin/env bun
 
 import { parse, type ParseError, type ParseOptions } from 'jsonc-parser';
-import type { IOContext } from './IOContext';
-import { Op } from './Op';
-import type { Failure, Success } from './Outcome';
+import type { IOContext } from './IOContext.ts';
+import { Op } from './Op.ts';
+import type { Failure, Success } from './Outcome.ts';
 
 /**
  Options for JSONCTC parsing
@@ -114,7 +114,7 @@ export class JSONCTCParseOp<T = unknown> extends Op
 // CLI support
 if (import.meta.main)
 {
-  const args = Bun.argv.slice(2);
+  const args = process.argv.slice(2);
 
   if (args.length < 1)
   {

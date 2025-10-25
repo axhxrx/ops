@@ -1,11 +1,11 @@
 #!/usr/bin/env bun
 
-import type { IOContext } from './IOContext';
-import { BrowserOpBase } from './BrowserOpBase';
-import { S3ListOp } from './S3ListOp';
-import { S3CredentialsOp } from './S3CredentialsOp';
-import { S3Listing } from './S3Types';
-import type { S3Entry, S3Credentials } from './S3Types';
+import type { IOContext } from './IOContext.ts';
+import { BrowserOpBase } from './BrowserOpBase.ts';
+import { S3ListOp } from './S3ListOp.ts';
+import { S3CredentialsOp } from './S3CredentialsOp.ts';
+import { S3Listing } from './S3Types.ts';
+import type { S3Entry, S3Credentials } from './S3Types.ts';
 
 /**
  * Selection mode for S3 browser

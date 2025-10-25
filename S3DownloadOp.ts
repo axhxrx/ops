@@ -3,10 +3,10 @@
 import { S3Client } from 'bun';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
-import type { IOContext } from './IOContext';
-import { Op } from './Op';
-import type { S3Credentials } from './S3Types';
-import { S3ListOp } from './S3ListOp';
+import type { IOContext } from './IOContext.ts';
+import { Op } from './Op.ts';
+import type { S3Credentials } from './S3Types.ts';
+import { S3ListOp } from './S3ListOp.ts';
 
 /**
  * Options for S3DownloadOp
@@ -132,7 +132,7 @@ export class S3DownloadOp extends Op
           await file.exists();
           await this.downloadFile(s3, this.s3Key, this.localPath, io, result);
         }
-        catch (error: unknown)
+        catch (_error: unknown)
         {
           // If file doesn't exist, try listing it as a prefix (directory without trailing /)
           const listOp = new S3ListOp(this.credentials, { prefix: this.s3Key + '/' });
@@ -157,6 +157,7 @@ export class S3DownloadOp extends Op
       // Classify the error
       if (error && typeof error === 'object')
       {
+        // eslint-disable-next-line @typescript-eslint/no-base-to-string
         const errorMessage = String(error);
 
         if (errorMessage.includes('403') || errorMessage.includes('Forbidden') || errorMessage.includes('credentials'))
@@ -347,7 +348,7 @@ if (import.meta.main)
 {
   console.log('⬇️  S3DownloadOp Demo\n');
 
-  const args = Bun.argv.slice(2);
+  const args = process.argv.slice(2);
   const s3Key = args[0];
   const localPath = args[1];
   const bucket = process.env.S3_BUCKET || 'test-bucket';

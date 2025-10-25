@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { hasAnsi, stripAnsi, stripAnsiFromLines } from './stripAnsi';
+import { hasAnsi, stripAnsi, stripAnsiFromLines } from './stripAnsi.ts';
 
 test('stripAnsi removes color codes', () =>
 {

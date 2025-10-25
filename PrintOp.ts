@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 
-import type { IOContext } from './IOContext';
-import { Op } from './Op';
+import type { IOContext } from './IOContext.ts';
+import { Op } from './Op.ts';
 
 /**
  * Options for PrintOp

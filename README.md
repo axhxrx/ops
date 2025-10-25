@@ -1,6 +1,12 @@
 # ops
 
-This is mostly an experiment in patterns to help elicit more useful outputs from coding LLMs. YMMV.
+🚨 WARNING: AI SLOP AHEAD 🚨
+
+This is mostly an experiment in patterns to help elicit more useful outputs from coding LLMs.
+
+Therefore, while the code has been reviewed for actually-dangerous bugs or harmful intent, it has generally not been _improved_, but left as-is. Some of the ops therefore contain many bugs, and may malfunction in various ways.
+
+You probably do not want to use this, therefore, unless perhaps you are also experimenting with trying to get more useful outputs from coding automatons.
 
 ## What is This?
 
@@ -8,7 +14,7 @@ The Ops Pattern is a simplification pattern that provides a constrained, fewer-c
 
 Ops compose naturally, are independently testable, often also independently runnable as command-line tools, and provide a framework for implementing observability, monitoring, and logging.
 
-But the main point of them is that they force as much of the software as possible into the same basic pattern, which is not super-annoying for a human (maybe a little bit, though) and seems to provide the simplicity and testability to make it easier for LLMs to... whatever it is they do that seems like _reasoning_, about the code. It's a pattern that has yielded better useful results, and fewer useless or harmful results, from 2025-era coding LLMs like GPT5- Codex and Claude Sonnet 4.5 (and others).
+But the main point of them is that they force as much of the software as possible into the same basic pattern, which is not super-annoying for a human (maybe a little bit, though) and seems to provide the simplicity and testability to make it easier for LLMs to... whatever it is they do that seems like _reasoning_, about the code. It's a pattern that has yielded better useful results, and fewer useless or harmful results, from 2025-era coding LLMs like GPT5-Codex and Claude Sonnet 4.5 (and others).
 
 This is a re-implementation of an experimental previous project that was written by humans; this library's code was largely produced by LLMs with access to the original's code and explanations of the Ops Pattern.
 
@@ -370,7 +376,7 @@ import { OpRunner } from './OpRunner';
 import { MainMenuOp } from './MainMenuOp';
 
 if (import.meta.main) {
-  const { opRunner } = parseOpRunnerArgs(Bun.argv.slice(2));
+  const { opRunner } = parseOpRunnerArgs(process.argv.slice(2));
   const mainMenu = new MainMenuOp();
   const runner = await OpRunner.create(mainMenu, opRunner);
   await runner.run();
@@ -379,10 +385,36 @@ if (import.meta.main) {
 
 Run it:
 ```bash
-bun main.ts                    # Interactive mode
+bun main.ts                    # Interactive mode (Bun)
+deno run -A main.ts            # Interactive mode (Deno)
 bun main.ts --record session   # Record inputs
 bun main.ts --replay session   # Replay session
 ```
+
+## Cross-Runtime Support
+
+This library works with both **Bun** and **Deno**:
+
+### Bun (Primary)
+```bash
+bun main.ts
+bun MenuDemo.tsx
+```
+
+### Deno
+```bash
+deno run -A main.ts
+deno task dev  # Uses deno.json task
+```
+
+**Key compatibility notes:**
+- JSX is configured for React in both runtimes
+- React version is pinned to 19.1.1 (matches Ink's peer dependency)
+- All npm dependencies are mapped in `deno.json` for Deno
+- Both runtimes share the same TypeScript config style
+
+**Why React 19.1.1?**
+The library uses [Ink](https://github.com/vadimdemedes/ink) for terminal UI, which requires React 19.x. To avoid the classic "multiple React instances" problem in Deno, we pin to the exact version that Ink expects (19.1.1). This ensures React hooks work correctly across both runtimes.
 
 ## Examples
 
@@ -436,3 +468,9 @@ Perfect for debugging and development.
 ## License
 
 MIT
+
+## Happenings
+
+- 2025-10-25: 🤖 release 666.420.69 now works (for some values of "works") with 🥟 Bun and 🦕 Deno 
+
+

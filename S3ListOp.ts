@@ -1,10 +1,10 @@
 #!/usr/bin/env bun
 
 import { S3Client } from 'bun';
-import type { IOContext } from './IOContext';
-import { Op } from './Op';
-import type { S3Credentials, S3Entry } from './S3Types';
-import { S3Listing } from './S3Types';
+import type { IOContext } from './IOContext.ts';
+import { Op } from './Op.ts';
+import type { S3Credentials, S3Entry } from './S3Types.ts';
+import { S3Listing } from './S3Types.ts';
 
 /**
  * Options for S3ListOp
@@ -79,7 +79,7 @@ export class S3ListOp extends Op
     try
     {
       // Create S3 client
-      const s3 = new S3Client({
+      const _s3 = new S3Client({
         accessKeyId: this.credentials.accessKeyId,
         secretAccessKey: this.credentials.secretAccessKey,
         endpoint: this.credentials.endpoint,
@@ -192,6 +192,7 @@ export class S3ListOp extends Op
       // Classify the error
       if (error && typeof error === 'object')
       {
+        // eslint-disable-next-line @typescript-eslint/no-base-to-string
         const errorMessage = String(error);
 
         if (errorMessage.includes('403') || errorMessage.includes('Forbidden') || errorMessage.includes('credentials'))

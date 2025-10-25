@@ -14,10 +14,10 @@
  Run with: bun OutcomeHandlerTest.tsx
  */
 
-import { parseOpRunnerArgs } from './args';
-import type { IOContext } from './IOContext';
-import { Op } from './Op';
-import { OpRunner } from './OpRunner';
+import { parseOpRunnerArgs } from './args.ts';
+import type { IOContext } from './IOContext.ts';
+import { Op } from './Op.ts';
+import { OpRunner } from './OpRunner.ts';
 
 // Enable logging to see the flow
 // OpRunner.opLoggingEnabled = true; // TODO: Update OpRunner logging API
@@ -303,7 +303,7 @@ class TestRunnerOp extends Op
 
 if (import.meta.main)
 {
-  const { opRunner } = parseOpRunnerArgs(Bun.argv.slice(2));
+  const { opRunner } = parseOpRunnerArgs(process.argv.slice(2));
   const test = new TestRunnerOp();
   const runner = await OpRunner.create(test, opRunner);
   await runner.run();

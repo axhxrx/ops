@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { describe, expect, test } from 'bun:test';
-import { JSONCTCObject } from './JSONCTCObject';
+import { JSONCTCObject } from './JSONCTCObject.ts';
 
 describe('JSONCTCObject', () =>
 {

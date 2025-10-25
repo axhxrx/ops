@@ -1,5 +1,5 @@
-import type { IOContext } from './IOContext';
-import { createDefaultLogger } from './Logger';
+import type { IOContext } from './IOContext.ts';
+import { createDefaultLogger } from './Logger.ts';
 import type { Failure, OpWithHandler, OutcomeHandler, Success } from './Outcome.ts';
 
 /**

@@ -1,11 +1,11 @@
-import type { IOContext } from './IOContext';
+import type { IOContext } from './IOContext.ts';
 import { Op } from './Op.ts';
 import type { OutcomeOf } from './Outcome.ts';
-import { PrintOp } from './PrintOp';
+import { PrintOp } from './PrintOp.ts';
 
 // PrintOp has been moved to its own file: PrintOp.ts
 // It's re-exported here for backwards compatibility
-export { PrintOp } from './PrintOp';
+export { PrintOp } from './PrintOp.ts';
 
 const _runExample = async () =>
 {

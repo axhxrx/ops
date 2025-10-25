@@ -15,7 +15,7 @@ export type OpRunnerArgs = {
  - --replay <file>    Replay session from file
  - --log <file>       Log output to file
 
- @param args - Typically Bun.argv.slice(2) or process.argv.slice(2)
+ @param args - Typically process.argv.slice(2) or process.argv.slice(2)
  @returns Object with opRunner config and remaining args for app
  */
 export function parseOpRunnerArgs(args: string[]): {

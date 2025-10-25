@@ -2,10 +2,10 @@
 
 import chalk from 'chalk';
 import { render } from 'ink';
-import type { IOContext } from './IOContext';
-import { MenuView } from './MenuOp.ui';
-import type { Menu } from './MenuPrimitives';
-import { Op } from './Op';
+import type { IOContext } from './IOContext.ts';
+import { MenuView } from './MenuOp.ui.tsx';
+import type { Menu } from './MenuPrimitives.ts';
+import { Op } from './Op.ts';
 
 /**
  * MenuOp - Rich, type-safe menu with auto-layout and keyboard shortcuts

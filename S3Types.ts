@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-import type { TableData, TableRow } from './ShowTableOp';
+import type { TableData, TableRow } from './ShowTableOp.tsx';
 
 /**
  * S3 Credentials configuration

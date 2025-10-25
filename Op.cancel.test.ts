@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
-import type { IOContext } from './IOContext';
-import { Op } from './Op';
+import type { IOContext } from './IOContext.ts';
+import { Op } from './Op.ts';
 
 /**
  Test op that can be canceled

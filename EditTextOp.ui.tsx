@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Box, Text, useInput, useStdout } from 'ink';
-import type { Logger } from './Logger';
+import type { Logger } from './Logger.ts';
 
 /**
  Props for EditTextInput component

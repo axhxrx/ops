@@ -1,7 +1,7 @@
 import { Box, Text, useInput, useStdout } from 'ink';
 import React, { useEffect, useMemo, useState } from 'react';
-import type { Logger } from './Logger';
-import type { InfoPanel, LineContent, Menu, MenuItem } from './MenuPrimitives';
+import type { Logger } from './Logger.ts';
+import type { InfoPanel, LineContent, Menu, MenuItem } from './MenuPrimitives.ts';
 
 /**
  * Props for InfoPanelView

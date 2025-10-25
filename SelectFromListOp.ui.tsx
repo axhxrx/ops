@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Box, Text, useInput } from 'ink';
 import InkSelectInput from 'ink-select-input';
-import type { Logger } from './Logger';
-import type { SelectOption } from './SelectFromListOp';
+import type { Logger } from './Logger.ts';
+import type { SelectOption } from './SelectFromListOp.tsx';
 
 /**
  Props for SelectInput component

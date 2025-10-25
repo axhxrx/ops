@@ -3,12 +3,12 @@
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { getConfigNamespace, sanitizeKey, sanitizeNamespace } from './ConfigContext';
-import { FileWriteOp } from './FileWriteOp';
-import type { IOContext } from './IOContext';
-import { JSONCTCObject } from './JSONCTCObject';
-import { JSONCTCReadFileOp } from './JSONCTCReadFileOp';
-import { Op } from './Op';
+import { getConfigNamespace, sanitizeKey, sanitizeNamespace } from './ConfigContext.ts';
+import { FileWriteOp } from './FileWriteOp.ts';
+import type { IOContext } from './IOContext.ts';
+import { JSONCTCObject } from './JSONCTCObject.ts';
+import { JSONCTCReadFileOp } from './JSONCTCReadFileOp.ts';
+import { Op } from './Op.ts';
 
 /**
  Options for writing config
@@ -308,7 +308,7 @@ export class WriteConfigOp<T = unknown> extends Op
 // CLI support
 if (import.meta.main)
 {
-  const args = Bun.argv.slice(2);
+  const args = process.argv.slice(2);
 
   if (args.length < 2)
   {

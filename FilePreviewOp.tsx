@@ -3,10 +3,10 @@
 import { render } from 'ink';
 import { readFile } from 'node:fs/promises';
 import { extname } from 'node:path';
-import { FilePreview } from './FilePreviewOp.ui';
-import type { IOContext } from './IOContext';
-import { Op } from './Op';
-import { RenderMarkdownOp } from './RenderMarkdownOp';
+import { FilePreview } from './FilePreviewOp.ui.tsx';
+import type { IOContext } from './IOContext.ts';
+import { Op } from './Op.ts';
+import { RenderMarkdownOp } from './RenderMarkdownOp.tsx';
 
 /**
  Options for FilePreviewOp
@@ -203,7 +203,7 @@ export class FilePreviewOp extends Op
 
 if (import.meta.main)
 {
-  const args = Bun.argv.slice(2);
+  const args = process.argv.slice(2);
 
   // If user provided a file path, preview that file
   if (args.length > 0)

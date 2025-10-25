@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { EventEmitter } from 'events';
-import type { InputEvent, Session } from './RecordableStdin';
-
+import { EventEmitter } from 'node:events';
+import type { InputEvent, Session } from './RecordableStdin.ts';
+import { Buffer } from "node:buffer";
 /**
  ReplayableStdin - Replays recorded user input, then switches to interactive mode once session replay finishes.
 
@@ -217,7 +217,7 @@ export class ReplayableStdin extends EventEmitter
     }
   }
 
-  setEncoding(encoding: BufferEncoding): this
+  setEncoding(encoding: NodeJS.BufferEncoding): this
   {
     process.stdin.setEncoding(encoding);
     return this;

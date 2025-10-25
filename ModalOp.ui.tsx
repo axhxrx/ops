@@ -1,6 +1,6 @@
 import { Box, Text, useInput, useStdout } from 'ink';
 import { useEffect, useState } from 'react';
-import type { Logger } from './Logger';
+import type { Logger } from './Logger.ts';
 
 /**
  * Matrix rain background - falling characters with cyberpunk vibes

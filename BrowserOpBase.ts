@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 
-import type { IOContext } from './IOContext';
-import { Op } from './Op';
+import type { IOContext } from './IOContext.ts';
+import { Op } from './Op.ts';
 import { ShowTableOp } from './ShowTableOp.tsx';
 import type { TableData, TableRow } from './ShowTableOp.tsx';
 
@@ -116,7 +116,8 @@ export abstract class BrowserOpBase<
 
       switch (result.type)
       {
-        case 'navigate': {
+        case 'navigate':
+        {
           // Navigation action from custom key handler (e.g., right arrow)
           const name = result.row.data.name as string;
           const entry = entries.find((e) => this.getEntryName(e) === name);
@@ -128,7 +129,8 @@ export abstract class BrowserOpBase<
           continue;
         }
 
-        case 'row-selected': {
+        case 'row-selected':
+        {
           // Single row selected with Enter key
           const name = result.row.data.name as string;
 
@@ -175,7 +177,8 @@ export abstract class BrowserOpBase<
           return this.succeed(entry as never);
         }
 
-        case 'rows-selected': {
+        case 'rows-selected':
+        {
           // Multi-select mode - validate and return selected entries
           const validationResult = this.handleMultiSelect(
             result.rows,
@@ -192,7 +195,8 @@ export abstract class BrowserOpBase<
           return this.succeed(validationResult.value as never);
         }
 
-        case 'display-closed': {
+        case 'display-closed':
+        {
           // This shouldn't happen in browser context, but TypeScript forces us to handle it
           // This is GOOD - it's exhaustive checking!
           this.warn(io, 'Display closed in browser mode - unexpected');

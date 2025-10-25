@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { FetchOp } from './FetchOp';
+import { FetchOp } from './FetchOp.tsx';
 
 describe('FetchOp', () =>
 {

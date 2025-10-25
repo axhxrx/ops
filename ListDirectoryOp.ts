@@ -3,10 +3,10 @@
 import { stat, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { Stats } from 'node:fs';
-import type { IOContext } from './IOContext';
-import { Op } from './Op';
-import type { FileSystemEntry, FileSystemEntryType } from './SelectFromFilesystemOp';
-import { DirectoryListing } from './DirectoryListing';
+import type { IOContext } from './IOContext.ts';
+import { Op } from './Op.ts';
+import type { FileSystemEntry, FileSystemEntryType } from './SelectFromFilesystemOp.ts';
+import { DirectoryListing } from './DirectoryListing.ts';
 
 /**
  * Options for ListDirectoryOp
@@ -176,7 +176,7 @@ if (import.meta.main)
 {
   console.log('📂 ListDirectoryOp Demo\n');
 
-  const args = Bun.argv.slice(2);
+  const args = process.argv.slice(2);
   const dirPath = args[0] || process.cwd();
   const showHidden = args.includes('--hidden');
 

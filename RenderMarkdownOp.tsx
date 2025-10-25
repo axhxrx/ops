@@ -2,9 +2,9 @@ import { render } from 'ink';
 import { marked } from 'marked';
 // @ts-expect-error - marked-terminal has runtime named export but no TS declarations
 import { markedTerminal } from 'marked-terminal';
-import type { IOContext } from './IOContext';
-import { Op } from './Op';
-import { MarkdownRenderer } from './RenderMarkdownOp.ui';
+import type { IOContext } from './IOContext.ts';
+import { Op } from './Op.ts';
+import { MarkdownRenderer } from './RenderMarkdownOp.ui.tsx';
 
 // Configure marked to use terminal renderer (once, at module level)
 // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any

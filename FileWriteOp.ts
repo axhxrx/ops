@@ -2,9 +2,9 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type { IOContext } from './IOContext';
-import { Op } from './Op';
-import type { Failure, Success } from './Outcome';
+import type { IOContext } from './IOContext.ts';
+import { Op } from './Op.ts';
+import type { Failure, Success } from './Outcome.ts';
 
 /**
  * Generic file writer that accepts either a string OR an object with toString() method.
@@ -125,7 +125,7 @@ export class FileWriteOp extends Op
 // CLI support
 if (import.meta.main)
 {
-  const args = Bun.argv.slice(2);
+  const args = process.argv.slice(2);
 
   if (args.length < 1)
   {

@@ -2,10 +2,10 @@
 
 import * as fs from 'node:fs';
 import process from 'node:process';
-import type { IOContext } from './IOContext';
-import { JSONCTCObject } from './JSONCTCObject';
-import { Op } from './Op';
-import type { Failure, Success } from './Outcome';
+import type { IOContext } from './IOContext.ts';
+import { JSONCTCObject } from './JSONCTCObject.ts';
+import { Op } from './Op.ts';
+import type { Failure, Success } from './Outcome.ts';
 
 /**
  * Read a JSONCTC file and return a JSONCTCObject wrapper
@@ -81,7 +81,7 @@ export class JSONCTCReadFileOp extends Op
 // CLI support
 if (import.meta.main)
 {
-  const args = Bun.argv.slice(2);
+  const args = process.argv.slice(2);
 
   if (args.length < 1)
   {

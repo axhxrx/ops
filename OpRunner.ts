@@ -1,10 +1,10 @@
 import { appendFileSync, writeFileSync } from 'node:fs';
-import type { OpRunnerArgs } from './args';
-import { createIOContext, type IOContext } from './IOContext';
-import type { Op } from './Op';
-import type { OpWithHandler } from './Outcome';
-import { isOp } from './isOp';
-import { type HandlerWithMeta, isHandler } from './HandlerWithMeta';
+import type { OpRunnerArgs } from './args.ts';
+import { createIOContext, type IOContext } from './IOContext.ts';
+import type { Op } from './Op.ts';
+import type { OpWithHandler } from './Outcome.ts';
+import { isOp } from './isOp.ts';
+import { type HandlerWithMeta, isHandler } from './HandlerWithMeta.ts';
 
 /**
  Stack-based operation runner with full observability
@@ -70,7 +70,7 @@ export class OpRunner
       catch (error)
       {
         // Silently fail if we can't write to log file
-        console.error(`[OpRunner] Failed to write to log file: ${error}`);
+        console.error(`[OpRunner] Failed to write to log file: ${String(error)}`);
       }
     }
   }
@@ -287,7 +287,7 @@ export class OpRunner
       }
       catch (error)
       {
-        console.error(`[OpRunner] Failed to initialize log file: ${error}`);
+        console.error(`[OpRunner] Failed to initialize log file: ${String(error)}`);
       }
     }
 

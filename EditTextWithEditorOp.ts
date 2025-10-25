@@ -1,9 +1,9 @@
 #!/usr/bin/env bun
 
-import type { IOContext } from './IOContext';
-import { Op } from './Op';
-import { EditTextOp, type EditTextOpOptions } from './EditTextOp';
-import { SelectFromListOp, type RichOption } from './SelectFromListOp';
+import type { IOContext } from './IOContext.ts';
+import { Op } from './Op.ts';
+import { EditTextOp, type EditTextOpOptions } from './EditTextOp.tsx';
+import { SelectFromListOp, type RichOption } from './SelectFromListOp.tsx';
 
 /**
  Known editors with their commands and detection methods

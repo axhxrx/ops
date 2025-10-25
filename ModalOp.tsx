@@ -1,9 +1,9 @@
 #!/usr/bin/env bun
 
 import { render } from 'ink';
-import type { IOContext } from './IOContext';
-import { ModalView } from './ModalOp.ui';
-import { Op } from './Op';
+import type { IOContext } from './IOContext.ts';
+import { ModalView } from './ModalOp.ui.tsx';
+import { Op } from './Op.ts';
 
 /**
  * ModalOp - Full-screen BRUTALIST cyberpunk modal with Matrix rain background

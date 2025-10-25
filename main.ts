@@ -1,6 +1,6 @@
-import { type OpRunnerArgs, parseOpRunnerArgs } from './args';
-import { WelcomeOp } from './GameOps';
-import { OpRunner } from './OpRunner';
+import { type OpRunnerArgs, parseOpRunnerArgs } from './args.ts';
+import { WelcomeOp } from './GameOps.ts';
+import { OpRunner } from './OpRunner.ts';
 
 async function main(args: { opRunner: OpRunnerArgs; app: Record<string, string> })
 {
@@ -20,7 +20,7 @@ async function main(args: { opRunner: OpRunnerArgs; app: Record<string, string> 
 function parseArgs()
 {
   // Parse framework args first
-  const { opRunner, remaining } = parseOpRunnerArgs(Bun.argv.slice(2));
+  const { opRunner, remaining } = parseOpRunnerArgs(process.argv.slice(2));
 
   // Parse app-specific args from remaining
   const app = parseAppArgs(remaining);

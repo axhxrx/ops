@@ -4,8 +4,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-floating-promises */
-import { Writable } from 'stream';
-import { stripAnsi } from './stripAnsi';
+import { Writable } from 'node:stream';
+import { stripAnsi } from './stripAnsi.ts';
 
 /**
  Options for TeeStream
@@ -43,7 +43,7 @@ export class TeeStream extends Writable
   /**
    Write implementation - writes to both console and log file
    */
-  override _write(chunk: any, encoding: BufferEncoding, callback: (error?: Error | null) => void): void
+  override _write(chunk: any, encoding: NodeJS.BufferEncoding, callback: (error?: Error | null) => void): void
   {
     try
     {

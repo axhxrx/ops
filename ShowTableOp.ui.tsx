@@ -1,14 +1,14 @@
 import { Box, type Key, Text, useInput, useStdout } from 'ink';
 import { useEffect, useState } from 'react';
-import type { Logger } from './Logger';
+import type { Logger } from './Logger.ts';
 import type {
   ShowTableOpOptions,
   TableColumn,
   TableData,
   TableDataProvider,
   TableRow,
-} from './ShowTableOp';
-import { getDisplayWidth, padToWidth, truncateToWidth } from './StringUtils';
+} from './ShowTableOp.tsx';
+import { getDisplayWidth, padToWidth, truncateToWidth } from './StringUtils.ts';
 
 /**
  Custom key handler result

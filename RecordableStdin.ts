@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
+
+import type { Buffer } from 'node:buffer';
 
 /**
  Represents a single input event (keystroke)
@@ -153,7 +155,7 @@ export class RecordableStdin extends EventEmitter
   }
 
   // Encoding
-  setEncoding(encoding: BufferEncoding): this
+  setEncoding(encoding: NodeJS.BufferEncoding): this
   {
     process.stdin.setEncoding(encoding);
     return this;

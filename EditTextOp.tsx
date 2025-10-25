@@ -4,9 +4,9 @@ import { render } from 'ink';
 import { unlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { EditTextInput } from './EditTextOp.ui';
-import type { IOContext } from './IOContext';
-import { Op } from './Op';
+import { EditTextInput } from './EditTextOp.ui.tsx';
+import type { IOContext } from './IOContext.ts';
+import { Op } from './Op.ts';
 
 /**
  Options for EditTextOp

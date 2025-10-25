@@ -1,7 +1,7 @@
 import { render } from 'ink';
-import { ConfirmInput } from './ConfirmOp.ui';
-import type { IOContext } from './IOContext';
-import { Op } from './Op';
+import { ConfirmInput } from './ConfirmOp.ui.tsx';
+import type { IOContext } from './IOContext.ts';
+import { Op } from './Op.ts';
 
 /**
  Options for ConfirmOp

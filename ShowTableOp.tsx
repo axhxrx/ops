@@ -2,10 +2,10 @@
 
 import { render } from 'ink';
 import React from 'react';
-import type { IOContext } from './IOContext';
-import { Op } from './Op';
-import type { Failure, Success } from './Outcome';
-import { type CustomKeyHandler, TableView } from './ShowTableOp.ui';
+import type { IOContext } from './IOContext.ts';
+import { Op } from './Op.ts';
+import type { Failure, Success } from './Outcome.ts';
+import { type CustomKeyHandler, TableView } from './ShowTableOp.ui.tsx';
 
 /**
  Table column configuration

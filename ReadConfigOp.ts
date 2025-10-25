@@ -3,11 +3,11 @@
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import type { IOContext } from './IOContext';
-import { Op } from './Op';
-import type { Failure, Success } from './Outcome';
-import { getConfigNamespace, sanitizeKey, sanitizeNamespace } from './ConfigContext';
-import { JSONCTCParseOp } from './JSONCTCParseOp';
+import type { IOContext } from './IOContext.ts';
+import { Op } from './Op.ts';
+import type { Failure, Success } from './Outcome.ts';
+import { getConfigNamespace, sanitizeKey, sanitizeNamespace } from './ConfigContext.ts';
+import { JSONCTCParseOp } from './JSONCTCParseOp.ts';
 
 /**
  Options for reading config
@@ -193,7 +193,7 @@ export class ReadConfigOp<T = unknown> extends Op
 // CLI support
 if (import.meta.main)
 {
-  const args = Bun.argv.slice(2);
+  const args = process.argv.slice(2);
 
   if (args.length < 1)
   {

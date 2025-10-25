@@ -14,12 +14,12 @@
 
 import { render } from 'ink';
 import { Text, useInput } from 'ink';
-import { parseOpRunnerArgs } from './args';
-import { FilePreviewOp } from './FilePreviewOp';
-import type { IOContext } from './IOContext';
-import { Op } from './Op';
-import { OpRunner } from './OpRunner';
-import { SelectFromListOp } from './SelectFromListOp';
+import { parseOpRunnerArgs } from './args.ts';
+import { FilePreviewOp } from './FilePreviewOp.tsx';
+import type { IOContext } from './IOContext.ts';
+import { Op } from './Op.ts';
+import { OpRunner } from './OpRunner.ts';
+import { SelectFromListOp } from './SelectFromListOp.tsx';
 
 /**
  Entry point op - shows the main menu
@@ -375,7 +375,7 @@ if (import.meta.main)
   console.log('🎯 Hierarchical Menu Demo\n');
   console.log('Demonstrating easy menu setup and navigation...\n');
 
-  const { opRunner } = parseOpRunnerArgs(Bun.argv.slice(2));
+  const { opRunner } = parseOpRunnerArgs(process.argv.slice(2));
   const mainMenu = new MainMenuOp();
   const runner = await OpRunner.create(mainMenu, opRunner);
   await runner.run();

@@ -4,10 +4,10 @@
  Demonstrates the op-returns-op pattern for stack-based execution
  */
 
-import type { IOContext } from './IOContext';
-import { Op } from './Op';
-import { PrintOp } from './PrintOp';
-import { SelectFromListOp } from './SelectFromListOp';
+import type { IOContext } from './IOContext.ts';
+import { Op } from './Op.ts';
+import { PrintOp } from './PrintOp.ts';
+import { SelectFromListOp } from './SelectFromListOp.tsx';
 
 /**
  Initial game op - prints welcome message then returns SelectNameOp

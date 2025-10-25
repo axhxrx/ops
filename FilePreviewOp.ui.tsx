@@ -1,5 +1,5 @@
 import { Box, Text, useInput } from 'ink';
-import type { Logger } from './Logger';
+import type { Logger } from './Logger.ts';
 
 /**
  Props for FilePreview component

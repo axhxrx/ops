@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 
-import type { FileSystemEntry } from './SelectFromFilesystemOp';
-import type { TableData, TableRow } from './ShowTableOp';
+import type { FileSystemEntry } from './SelectFromFilesystemOp.ts';
+import type { TableData, TableRow } from './ShowTableOp.tsx';
 
 /**
  * DirectoryListing - Simple data model for directory contents

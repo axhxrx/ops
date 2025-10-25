@@ -17,12 +17,7 @@ export default defineConfig(
           //   0:0  error  Parsing error: /Volumes/CODE/@axhxrx/ops/Op.test.ts was not found by the project service. Consider either including it in the tsconfig.json or including it in allowDefaultProject
           // Allow specific directories without ** glob to avoid performance warning
           allowDefaultProject: [
-            '*.test.ts',
-            '*.mts',
             '*.config.*',
-            'src/*/*.test.ts',
-            'src/*.test.ts',
-            'examples/*.test.ts',
           ],
         },
       },
@@ -62,5 +57,18 @@ export default defineConfig(
         },
       ],
     },
+  },
+  // How do I disable type-checked linting for a file?
+  // https://typescript-eslint.io/troubleshooting/typed-linting/#how-do-i-disable-type-checked-linting-for-a-file
+  // Because otherwise the defaultProject type-checked linting goes batshit
+  // /Volumes/CODE/@axhxrx/ops/stripAnsi.test.ts
+  //   0:0  error  Parsing error: Too many files (>8) have matched the default project.
+  //
+  // Having many files run with the default project is known to cause performance issues and slow down linting.
+  //
+  // See https://typescript-eslint.io/troubleshooting/typed-linting#allowdefaultproject-glob-too-wide
+  {
+    files: ['**/*.test.ts'],
+    extends: [tseslint.configs.disableTypeChecked],
   },
 );

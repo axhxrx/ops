@@ -1,9 +1,9 @@
 #!/usr/bin/env bun
 
-import type { IOContext } from './IOContext';
-import { Op } from './Op';
-import { InputTextOp } from './InputTextOp';
-import type { S3Credentials } from './S3Types';
+import type { IOContext } from './IOContext.ts';
+import { Op } from './Op.ts';
+import { InputTextOp } from './InputTextOp.tsx';
+import type { S3Credentials } from './S3Types.ts';
 
 /**
  * Options for S3CredentialsOp
@@ -75,12 +75,12 @@ export class S3CredentialsOp extends Op
       const envCreds = this.getCredentialsFromEnv();
       if (envCreds)
       {
-        this.log(io, 'Using S3 credentials from environment variables');
+        this.log(ioContext, 'Using S3 credentials from environment variables');
         return this.succeed(envCreds);
       }
     }
 
-    this.log(io, 'S3 credentials not found in environment, prompting user...');
+    this.log(ioContext, 'S3 credentials not found in environment, prompting user...');
 
     // Prompt for access key ID
     const accessKeyIdOp = new InputTextOp('Enter S3 Access Key ID:', {
@@ -89,7 +89,7 @@ export class S3CredentialsOp extends Op
       initialValue: this.options.defaults?.accessKeyId,
     });
 
-    const accessKeyIdResult = await accessKeyIdOp.run(io);
+    const accessKeyIdResult = await accessKeyIdOp.run(ioContext);
     if (!accessKeyIdResult.ok) return accessKeyIdResult;
 
     // Prompt for secret access key (masked input would be better, but InputTextOp doesn't support it yet)
@@ -99,7 +99,7 @@ export class S3CredentialsOp extends Op
       initialValue: this.options.defaults?.secretAccessKey,
     });
 
-    const secretAccessKeyResult = await secretAccessKeyOp.run(io);
+    const secretAccessKeyResult = await secretAccessKeyOp.run(ioContext);
     if (!secretAccessKeyResult.ok) return secretAccessKeyResult;
 
     // Prompt for endpoint (optional)
@@ -109,7 +109,7 @@ export class S3CredentialsOp extends Op
       initialValue: this.options.defaults?.endpoint,
     });
 
-    const endpointResult = await endpointOp.run(io);
+    const endpointResult = await endpointOp.run(ioContext);
     if (!endpointResult.ok) return endpointResult;
 
     // Prompt for region (optional)
@@ -119,7 +119,7 @@ export class S3CredentialsOp extends Op
       initialValue: this.options.defaults?.region || 'ap-northeast-1',
     });
 
-    const regionResult = await regionOp.run(io);
+    const regionResult = await regionOp.run(ioContext);
     if (!regionResult.ok) return regionResult;
 
     const credentials: S3Credentials = {
@@ -164,7 +164,7 @@ if (import.meta.main)
 {
   console.log('🔐 S3CredentialsOp Demo\n');
 
-  const args = Bun.argv.slice(2);
+  const args = process.argv.slice(2);
   const bucket = args[0] || 'test-bucket';
 
   console.log(`Getting credentials for bucket: ${bucket}\n`);

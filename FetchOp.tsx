@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 
-import type { IOContext } from './IOContext';
-import { Op } from './Op';
+import type { IOContext } from './IOContext.ts';
+import { Op } from './Op.ts';
 
 /**
  Options for FetchOp
@@ -335,7 +335,7 @@ export class FetchOp<T = unknown> extends Op
 
 if (import.meta.main)
 {
-  const args = Bun.argv.slice(2);
+  const args = process.argv.slice(2);
 
   if (args.length > 0)
   {

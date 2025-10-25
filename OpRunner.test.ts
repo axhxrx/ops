@@ -1,8 +1,8 @@
 import { test, expect, describe } from 'bun:test';
-import { OpRunner } from './OpRunner';
-import { Op } from './Op';
-import type { IOContext } from './IOContext';
-import type { OutcomeHandler } from './Outcome';
+import { OpRunner } from './OpRunner.ts';
+import { Op } from './Op.ts';
+import type { IOContext } from './IOContext.ts';
+import type { OutcomeHandler } from './Outcome.ts';
 
 /**
  * Debug flag for verbose logging
@@ -14,7 +14,7 @@ const DEBUG = process.env.DEBUG_OPRUNNER === 'true';
  * Type definitions for ScriptedOp actions
  */
 type OpAction =
-  | { type: 'succeed'; value: any }
+  | { type: 'succeed'; value: unknown }
   | { type: 'fail'; failure: string }
   | { type: 'handleOutcome'; child: Op; handler?: OutcomeHandler<Op> }
   | { type: 'replaceWith'; nextOp: Op };
@@ -41,6 +41,7 @@ class ScriptedOp extends Op
     this.script = script;
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async run(_io?: IOContext)
   {
     const action = this.script[this.callCount++];
@@ -252,7 +253,7 @@ describe('HandleOutcome - Basic', () => {
   });
 
   test('Handler receives success outcome', async () => {
-    let receivedOutcome: any;
+    let receivedOutcome: unknown;
 
     const child = new ScriptedOp('Child', [
       { type: 'succeed', value: 'success value' }
@@ -283,7 +284,7 @@ describe('HandleOutcome - Basic', () => {
   });
 
   test('Handler receives failure outcome', async () => {
-    let receivedOutcome: any;
+    let receivedOutcome: unknown;
 
     const child = new ScriptedOp('Child', [
       { type: 'fail', failure: 'child error' }
@@ -675,7 +676,7 @@ describe('Complex Flows', () => {
   });
 
   test('Success value passing through handlers', async () => {
-    const values: any[] = [];
+    const values: unknown[] = [];
 
     const child = new ScriptedOp('Child', [
       { type: 'succeed', value: 'original value' }

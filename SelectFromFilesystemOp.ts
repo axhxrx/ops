@@ -2,10 +2,10 @@
 
 import type { Stats } from 'node:fs';
 import { dirname, sep } from 'node:path';
-import { BrowserOpBase } from './BrowserOpBase';
-import type { DirectoryListing } from './DirectoryListing';
-import type { IOContext } from './IOContext';
-import { ListDirectoryOp } from './ListDirectoryOp';
+import { BrowserOpBase } from './BrowserOpBase.ts';
+import type { DirectoryListing } from './DirectoryListing.ts';
+import type { IOContext } from './IOContext.ts';
+import { ListDirectoryOp } from './ListDirectoryOp.ts';
 
 /**
  File system entry type

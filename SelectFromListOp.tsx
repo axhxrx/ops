@@ -1,9 +1,9 @@
 #!/usr/bin/env bun
 
 import { render } from 'ink';
-import type { IOContext } from './IOContext';
-import { Op } from './Op';
-import { SelectInput } from './SelectFromListOp.ui';
+import type { IOContext } from './IOContext.ts';
+import { Op } from './Op.ts';
+import { SelectInput } from './SelectFromListOp.ui.tsx';
 
 /**
  Simple string option (backward compatible)

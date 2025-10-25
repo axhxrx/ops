@@ -1,9 +1,9 @@
 #!/usr/bin/env bun
 
 import { applyEdits, modify, type FormattingOptions, type ModificationOptions } from 'jsonc-parser';
-import type { IOContext } from './IOContext';
-import { Op } from './Op';
-import type { Failure, Success } from './Outcome';
+import type { IOContext } from './IOContext.ts';
+import { Op } from './Op.ts';
+import type { Failure, Success } from './Outcome.ts';
 
 /**
  Options for JSONCTC modification
@@ -138,7 +138,7 @@ export class JSONCTCModifyOp extends Op
 // CLI support
 if (import.meta.main)
 {
-  const args = Bun.argv.slice(2);
+  const args = process.argv.slice(2);
 
   if (args.length < 3)
   {

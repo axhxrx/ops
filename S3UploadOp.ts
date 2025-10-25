@@ -3,9 +3,9 @@
 import { S3Client } from 'bun';
 import { stat, readdir } from 'node:fs/promises';
 import { join, relative, basename } from 'node:path';
-import type { IOContext } from './IOContext';
-import { Op } from './Op';
-import type { S3Credentials } from './S3Types';
+import type { IOContext } from './IOContext.ts';
+import { Op } from './Op.ts';
+import type { S3Credentials } from './S3Types.ts';
 
 /**
  * Options for S3UploadOp
@@ -148,6 +148,7 @@ export class S3UploadOp extends Op
       // Classify the error
       if (error && typeof error === 'object')
       {
+        // eslint-disable-next-line @typescript-eslint/no-base-to-string
         const errorMessage = String(error);
 
         if (errorMessage.includes('403') || errorMessage.includes('Forbidden') || errorMessage.includes('credentials'))
@@ -280,7 +281,7 @@ if (import.meta.main)
 {
   console.log('⬆️  S3UploadOp Demo\n');
 
-  const args = Bun.argv.slice(2);
+  const args = process.argv.slice(2);
   const localPath = args[0];
   const s3Key = args[1];
   const bucket = process.env.S3_BUCKET || 'test-bucket';

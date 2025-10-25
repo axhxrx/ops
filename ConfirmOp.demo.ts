@@ -9,12 +9,12 @@
  * - Replay a session: bun ConfirmOp.demo.ts --replay confirm-yes.json
  */
 
-import { parseOpRunnerArgs } from './args';
-import { ConfirmOp } from './ConfirmOp';
-import type { IOContext } from './IOContext';
-import { Op } from './Op';
-import { OpRunner } from './OpRunner';
-import { PrintOp } from './PrintOp';
+import { parseOpRunnerArgs } from './args.ts';
+import { ConfirmOp } from './ConfirmOp.tsx';
+import type { IOContext } from './IOContext.ts';
+import { Op } from './Op.ts';
+import { OpRunner } from './OpRunner.ts';
+import { PrintOp } from './PrintOp.ts';
 
 /**
  * Demo op that chains Print -> Confirm -> Print result
@@ -87,7 +87,7 @@ class AskConfirmOp extends Op
 
 if (import.meta.main)
 {
-  const { opRunner } = parseOpRunnerArgs(Bun.argv.slice(2));
+  const { opRunner } = parseOpRunnerArgs(process.argv.slice(2));
   const demoOp = new ConfirmDemoOp();
   const runner = await OpRunner.create(demoOp, opRunner);
   await runner.run();
