@@ -26,6 +26,7 @@
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false,
     "baseUrl": ".",
+    "types": ["bun-types"]
   },
   "include": [
     "**/*.ts",
