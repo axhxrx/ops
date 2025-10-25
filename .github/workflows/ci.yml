@@ -13,8 +13,12 @@ jobs:
         with:
           deno-version: v2.x
 
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
       - name: Test
-        run: deno task test
+        run: bun test && bun check && deno check
 
       # The --allow-dirty is needed because in CI the deno.lock file may be modified
       # NOTE: For now, using --allow-slow-types because the inferred, as const return types of run() are so cool we want to keep investigating
