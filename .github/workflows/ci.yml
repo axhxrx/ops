@@ -20,6 +20,9 @@ jobs:
       - name: Install dependencies for Bun
         run: bun install
 
+      - name: Install dependencies for Deno
+        run: deno install
+
       - name: Test (Bun) and check (Bund and Deno)
         run: bun test && bun check && deno check
 
