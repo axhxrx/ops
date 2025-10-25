@@ -17,7 +17,10 @@ jobs:
         with:
           bun-version: latest
 
-      - name: Test
+      - name: Install dependencies for Bun
+        run: bun install
+
+      - name: Test (Bun) and check (Bund and Deno)
         run: bun test && bun check && deno check
 
       # The --allow-dirty is needed because in CI the deno.lock file may be modified
