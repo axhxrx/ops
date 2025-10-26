@@ -21,7 +21,7 @@ export class OpRunner
   /**
    Enable or disable OpRunner's internal logging. Default: false
    */
-  static opLoggingEnabled = 'FIXME';
+  static opLoggingEnabled = false;
 
   /**
    Path to log file for stack mutations. Default: './op-runner-log.txt'
@@ -45,13 +45,25 @@ export class OpRunner
     this.startTime = Date.now();
   }
 
+  protected static _default?: OpRunner;
+
+  static get default(): OpRunner | undefined {
+    return this._default;
+  }
+
+  static get defaultIOContext(): IOContext | undefined {
+    return this._default?.io;
+  }
+
   /**
    * Create an OpRunner instance (async because IO setup may be async)
    */
   static async create(initialOp: Op, ioConfig: OpRunnerArgs = { mode: 'interactive' }): Promise<OpRunner>
   {
+   
     const io = await createIOContext(ioConfig);
-    return new OpRunner(initialOp, ioConfig, io);
+    this._default = new OpRunner(initialOp, ioConfig, io);
+    return this._default;
   }
 
   /**

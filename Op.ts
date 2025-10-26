@@ -1,5 +1,7 @@
+import process from 'node:process';
 import type { IOContext } from './IOContext.ts';
 import { createDefaultLogger } from './Logger.ts';
+import { OpRunner } from './OpRunner.ts';
 import type { Failure, OpWithHandler, OutcomeHandler, Success } from './Outcome.ts';
 
 /**
@@ -30,12 +32,14 @@ export abstract class Op
    */
   protected getIO(io?: IOContext): IOContext
   {
-    return io ?? {
-      stdin: process.stdin,
-      stdout: process.stdout,
-      mode: 'interactive',
-      logger: createDefaultLogger(),
-    };
+    return io
+      ?? OpRunner.defaultIOContext
+      ?? {
+        stdin: process.stdin,
+        stdout: process.stdout,
+        mode: 'interactive',
+        logger: createDefaultLogger(),
+      };
   }
 
   /**
