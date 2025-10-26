@@ -5,9 +5,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-floating-promises */
 import { createWriteStream, type WriteStream } from 'node:fs';
+import process from 'node:process';
 import { Writable } from 'node:stream';
 import { stripAnsi } from './stripAnsi.ts';
-
 /**
  Options for TeeStream
  */

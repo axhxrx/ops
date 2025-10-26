@@ -1,10 +1,10 @@
 import { appendFileSync, writeFileSync } from 'node:fs';
 import type { OpRunnerArgs } from './args.ts';
-import { createIOContext, type IOContext } from './IOContext.ts';
-import type { Op } from './Op.ts';
-import type { OpWithHandler } from './Outcome.ts';
-import { isOp } from './isOp.ts';
 import { type HandlerWithMeta, isHandler } from './HandlerWithMeta.ts';
+import { createIOContext, type IOContext } from './IOContext.ts';
+import { isOp } from './isOp.ts';
+import type { Op } from './Op.ts';
+import type { OpWithHandler, OutcomeOf } from './Outcome.ts';
 
 /**
  Stack-based operation runner with full observability
@@ -16,7 +16,7 @@ import { type HandlerWithMeta, isHandler } from './HandlerWithMeta.ts';
  - Easy to add hooks/middleware later (before/after, metrics, tracing, etc.)
  - Testing: Easier to test ops in isolation
  */
-export class OpRunner
+export class OpRunner<T extends Op>
 {
   /**
    Enable or disable OpRunner's internal logging. Default: false
@@ -29,38 +29,43 @@ export class OpRunner
   static logFilePath = './op-runner-log.txt';
 
   private stack: Array<Op | HandlerWithMeta> = []; // Single stack containing both Ops and Handlers
+
+  private initialOp: T;
+  private initialOpOutcome?: OutcomeOf<T>;
   private io: IOContext;
   private ioConfig: OpRunnerArgs;
   private startTime: number;
 
   private constructor(
-    initialOp: Op,
+    initialOp: T,
     ioConfig: OpRunnerArgs,
     io: IOContext,
   )
   {
+    this.initialOp = initialOp;
     this.stack = [initialOp];
     this.ioConfig = ioConfig;
     this.io = io;
     this.startTime = Date.now();
   }
 
-  protected static _default?: OpRunner;
+  protected static _default?: OpRunner<Op>;
 
-  static get default(): OpRunner | undefined {
+  static get default(): OpRunner<Op> | undefined
+  {
     return this._default;
   }
 
-  static get defaultIOContext(): IOContext | undefined {
+  static get defaultIOContext(): IOContext | undefined
+  {
     return this._default?.io;
   }
 
   /**
    * Create an OpRunner instance (async because IO setup may be async)
    */
-  static async create(initialOp: Op, ioConfig: OpRunnerArgs = { mode: 'interactive' }): Promise<OpRunner>
+  static async create(initialOp: Op, ioConfig: OpRunnerArgs = { mode: 'interactive' }): Promise<OpRunner<Op>>
   {
-   
     const io = await createIOContext(ioConfig);
     this._default = new OpRunner(initialOp, ioConfig, io);
     return this._default;
@@ -147,6 +152,12 @@ export class OpRunner
 
     const opStartTime = Date.now();
     const outcome = await op.run(this.io);
+
+    if (op === this.initialOp)
+    {
+      this.initialOpOutcome = outcome as OutcomeOf<T>;
+    }
+
     const opDuration = Date.now() - opStartTime;
 
     // Log outcome
@@ -288,7 +299,7 @@ export class OpRunner
    Note: Handlers must exhaustively handle all outcomes and always return an Op.
    The default handler returns `this` to re-run the parent op.
    */
-  async run(): Promise<void>
+  async run(): Promise<OutcomeOf<T>>
   {
     // Initialize log file
     if (OpRunner.opLoggingEnabled)
@@ -336,11 +347,15 @@ export class OpRunner
       this.logToFile('');
     }
 
+    // FIXME: Make the session recording flush every turn so the program doesn't have to succeed to write a log
+
     // Save recorded session if in record mode
     if (this.ioConfig.mode === 'record' && this.io.recordableStdin && this.ioConfig.sessionFile)
     {
       await this.io.recordableStdin.saveSession(this.ioConfig.sessionFile);
     }
+
+    return this.initialOpOutcome as OutcomeOf<T>;
   }
 
   /**
