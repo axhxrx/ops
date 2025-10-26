@@ -68,11 +68,23 @@ const CustomTextInput = ({
   // Cursor position: for placeholder, cursor is at start; for actual text, at end or specified position
   const cursorPos = showPlaceholder ? 0 : cursorPosition;
 
+  // When showing cursor, split text around cursor position
+  // When not showing cursor, display full text
+  if (isFocused && showCursor)
+  {
+    return (
+      <Text color='cyan' dimColor={showPlaceholder ? true : undefined}>
+        {(text || '').slice(0, cursorPos)}
+        <Text inverse>{(text || '').charAt(cursorPos) || ' '}</Text>
+        {(text || '').slice(cursorPos + 1)}
+      </Text>
+    );
+  }
+
+  // Not focused or no cursor - show full text
   return (
-    <Text color={isFocused ? 'cyan' : undefined} dimColor={showPlaceholder ? true : undefined}>
-      {(text || '').slice(0, cursorPos)}
-      {isFocused && showCursor && <Text inverse>{(text || '').charAt(cursorPos) || ' '}</Text>}
-      {(text || '').slice(cursorPos + 1)}
+    <Text dimColor={showPlaceholder ? true : undefined}>
+      {text || ''}
     </Text>
   );
 };
@@ -317,7 +329,8 @@ export const FormView = <T extends Record<string, FormItem<any>>>({
       let newValue = currentValue as string;
       const cursorPos = cursorPositions[item.key] ?? newValue.length;
 
-      if (key.backspace)
+      // Handle backspace - delete character before cursor
+      if (key.backspace || (input === '' && !key.delete && !key.return && !key.escape && !key.tab))
       {
         if (cursorPos > 0)
         {
@@ -326,6 +339,7 @@ export const FormView = <T extends Record<string, FormItem<any>>>({
           setCursorPositions((prev: Record<string, number>) => ({ ...prev, [item.key]: cursorPos - 1 }));
         }
       }
+      // Handle delete - delete character at cursor
       else if (key.delete)
       {
         if (cursorPos < newValue.length)
@@ -334,7 +348,8 @@ export const FormView = <T extends Record<string, FormItem<any>>>({
           newValue = newValue.slice(0, cursorPos) + newValue.slice(cursorPos + 1);
         }
       }
-      else if (input)
+      // Handle regular character input
+      else if (input && input.length > 0)
       {
         // Insert character at cursor position
         newValue = newValue.slice(0, cursorPos) + input + newValue.slice(cursorPos);
