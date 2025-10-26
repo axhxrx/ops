@@ -4,6 +4,7 @@ import type { Form, FormItem } from './FormPrimitives.ts';
 import type { Logger } from './Logger.ts';
 import type { InfoPanel } from './MenuPrimitives.ts';
 import { getDisplayWidth, padToWidth } from './StringUtils.ts';
+import { appendFileSync } from 'node:fs';
 
 /**
  * Props for FormView component
@@ -218,6 +219,9 @@ export const FormView = <T extends Record<string, FormItem<any>>>({
   // Handle keyboard input
   useInput((input, key) =>
   {
+    // DEBUG: Log all input events to file
+    appendFileSync('/tmp/form-debug.log', `useInput: input="${input}" (length=${input.length}) key=${JSON.stringify(key)}\n`);
+
     if (handled) return;
 
     const currentItem = items[focusedIndex];
@@ -319,19 +323,44 @@ export const FormView = <T extends Record<string, FormItem<any>>>({
     handleFieldInput(currentItem, input, key);
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleFieldInput = (item: FormItem<any>, input: string, key: { backspace?: boolean; delete?: boolean }) =>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+  const handleFieldInput = (item: FormItem<any>, input: string, key: any) =>
   {
     const currentValue = values[item.key];
+
+    // DEBUG: Log handleFieldInput calls
+    appendFileSync('/tmp/form-debug.log', `handleFieldInput: field="${item.key}" input="${input}" (length=${input.length}) key=${JSON.stringify(key)} currentValue="${String(currentValue)}"\n`);
 
     if (item.type === 'text' || item.type === 'password')
     {
       let newValue = currentValue as string;
       const cursorPos = cursorPositions[item.key] ?? newValue.length;
 
+      // DEBUG: Log cursor position and decision
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      appendFileSync('/tmp/form-debug.log', `  cursorPos=${cursorPos} checking: key.backspace=${key.backspace} emptyInput=${input === ''}\n`);
+
       // Handle backspace - delete character before cursor
-      if (key.backspace || (input === '' && !key.delete && !key.return && !key.escape && !key.tab))
+      // Note: Check for empty input without any other special keys (arrow keys, etc.)
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      const isBackspace = key.backspace || (
+        input === '' &&
+        !key.delete &&
+        !key.return &&
+        !key.escape &&
+        !key.tab &&
+        !key.upArrow &&
+        !key.downArrow &&
+        !key.leftArrow &&
+        !key.rightArrow &&
+        !key.ctrl &&
+        !key.shift &&
+        !key.meta
+      );
+
+      if (isBackspace)
       {
+        appendFileSync('/tmp/form-debug.log', `  BACKSPACE DETECTED! cursorPos=${cursorPos} will delete char before cursor\n`);
         if (cursorPos > 0)
         {
           // Delete character before cursor
@@ -340,6 +369,7 @@ export const FormView = <T extends Record<string, FormItem<any>>>({
         }
       }
       // Handle delete - delete character at cursor
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       else if (key.delete)
       {
         if (cursorPos < newValue.length)
@@ -370,6 +400,7 @@ export const FormView = <T extends Record<string, FormItem<any>>>({
       let newValue = currentValue as number;
       const strValue = String(newValue);
 
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       if (key.backspace)
       {
         const newStr = strValue.slice(0, -1);
