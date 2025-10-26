@@ -91,6 +91,31 @@ describe('FormPrimitives', () =>
       expect(field.type).toBe('boolean');
       expect(field.defaultValue).toBe(false);
     });
+
+    test('creates password field', () =>
+    {
+      const field = FormItem.password('password', '').label('Password');
+
+      expect(field.key).toBe('password');
+      expect(field.type).toBe('password');
+      expect(field.defaultValue).toBe('');
+    });
+
+    test('validates password field like text field', () =>
+    {
+      const field = FormItem.password('password', '')
+        .required()
+        .minLength(8);
+
+      const error1 = field.validate('');
+      expect(error1).toBe('This field is required');
+
+      const error2 = field.validate('short');
+      expect(error2).toBe('Must be at least 8 characters');
+
+      const valid = field.validate('verysecurepassword');
+      expect(valid).toBeUndefined();
+    });
   });
 
   describe('Form', () =>

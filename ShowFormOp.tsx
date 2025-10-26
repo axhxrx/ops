@@ -233,6 +233,12 @@ if (import.meta.main)
       .placeholder('my_username')
       .labelColor('green')
       .labelBold(),
+    password: FormItem.password('password', '')
+      .label('Password')
+      .required()
+      .minLength(8)
+      .placeholder('********')
+      .labelColor('green'),
     age: FormItem.number('age', 0)
       .label('Age')
       .validator((v) => v < 13 ? 'Must be 13 or older' : v > 120 ? 'Invalid age' : undefined)
@@ -262,6 +268,7 @@ if (import.meta.main)
     const values = registrationResult.value.values;
     console.log('\n✅ Registration successful!');
     console.log(`Username: ${values.username}`);
+    console.log(`Password: ${'*'.repeat((values.password as string).length)} (masked)`);
     console.log(`Age: ${values.age}`);
     console.log(`Newsletter: ${values.newsletter ? 'Yes' : 'No'}`);
     console.log(`Terms accepted: ${values.terms ? 'Yes' : 'No'}`);

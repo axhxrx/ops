@@ -102,6 +102,23 @@ FormItem.text(key: string, defaultValue: string)
   .labelBold()                      // Make label bold
 ```
 
+### Password Fields
+
+```typescript
+FormItem.password(key: string, defaultValue: string)
+  .label(text: string)              // Display label
+  .required()                       // Mark as required
+  .minLength(length: number)        // Minimum length validation
+  .maxLength(length: number)        // Maximum length validation
+  .pattern(regex: RegExp)           // Regex pattern validation
+  .placeholder(text: string)        // Placeholder text
+  .validator(fn: (value: string) => string | undefined)  // Custom validator
+  .labelColor(color: string)        // Label color
+  .labelBold()                      // Make label bold
+```
+
+**Note:** Password fields display asterisks (*) instead of actual characters as the user types.
+
 ### Number Fields
 
 ```typescript
@@ -138,12 +155,25 @@ Form.create({
 
 ## Keyboard Navigation
 
+### Field Navigation
 - **Tab**: Move to next field
 - **Shift+Tab**: Move to previous field
+- **Arrow Down**: Move to next field
+- **Arrow Up**: Move to previous field (or move cursor to start in text/password fields)
+
+### Text Editing (text/password fields)
+- **Arrow Left**: Move cursor left
+- **Arrow Right**: Move cursor right
+- **Backspace**: Delete character before cursor
+- **Delete**: Delete character at cursor
+- **Any character**: Insert at cursor position
+
+### Form Actions
 - **Enter**: Submit form (or move to next field if not on last field)
 - **Ctrl+Enter**: Submit form from any field
 - **Escape**: Cancel (if cancelable option is true)
-- **Backspace**: Delete character (text/number fields)
+
+### Boolean Fields
 - **y/n/Space**: Toggle boolean fields
 
 ## Success/Failure Types
@@ -194,7 +224,9 @@ Validation happens:
 - **Errors**: Red text with ❌ emoji, displayed below field
 - **Required fields**: Marked with asterisk (*)
 - **Boolean fields**: Shows "Yes" or "No" with toggle hint
-- **Placeholders**: Dimmed text for empty fields
+- **Placeholders**: Dimmed text for empty fields, cursor positioned at start
+- **Password fields**: Display asterisks (*) instead of actual characters
+- **Cursor**: Inverse highlight showing current position in text/password fields
 
 ## Examples
 

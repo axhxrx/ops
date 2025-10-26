@@ -26,7 +26,7 @@ export type Validator<T> = (value: T) => string | undefined;
 /**
  * Form field types supported
  */
-export type FieldType = 'text' | 'number' | 'boolean';
+export type FieldType = 'text' | 'number' | 'boolean' | 'password';
 
 /**
  * FormItem - A single form field with validation and metadata
@@ -58,6 +58,14 @@ export class FormItem<T>
   static boolean(key: string, defaultValue: boolean): FormItem<boolean>
   {
     return new FormItem(key, 'boolean', defaultValue);
+  }
+
+  /**
+   * Create a password input field (masked display)
+   */
+  static password(key: string, defaultValue: string): FormItem<string>
+  {
+    return new FormItem(key, 'password', defaultValue);
   }
 
   private config: {
@@ -209,7 +217,7 @@ export class FormItem<T>
     // Required check
     if (this.config.required)
     {
-      if (this.type === 'text' && (value as unknown as string).trim() === '')
+      if ((this.type === 'text' || this.type === 'password') && (value as unknown as string).trim() === '')
       {
         return 'This field is required';
       }
@@ -220,8 +228,8 @@ export class FormItem<T>
       }
     }
 
-    // Text-specific validations
-    if (this.type === 'text')
+    // Text-specific validations (applies to both text and password fields)
+    if (this.type === 'text' || this.type === 'password')
     {
       const strValue = value as unknown as string;
 

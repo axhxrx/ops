@@ -45,20 +45,33 @@ const CustomTextInput = ({
   placeholder,
   isFocused,
   showCursor = true,
+  cursorPosition = 0,
+  masked = false,
 }: {
   value: string;
   placeholder?: string;
   isFocused: boolean;
   showCursor?: boolean;
+  cursorPosition?: number;
+  masked?: boolean;
 }) =>
 {
-  const displayValue = value || placeholder || '';
   const showPlaceholder = !value && placeholder;
+
+  // For masked fields (passwords), show asterisks instead of actual value
+  const displayValue = masked && value ? '*'.repeat(value.length) : value;
+
+  // If showing placeholder, display it; otherwise show the actual/masked value
+  const text = showPlaceholder ? placeholder : displayValue;
+
+  // Cursor position: for placeholder, cursor is at start; for actual text, at end or specified position
+  const cursorPos = showPlaceholder ? 0 : cursorPosition;
 
   return (
     <Text color={isFocused ? 'cyan' : undefined} dimColor={showPlaceholder}>
-      {displayValue}
-      {isFocused && showCursor && <Text inverse> </Text>}
+      {text?.slice(0, cursorPos)}
+      {isFocused && showCursor && <Text inverse>{text?.charAt(cursorPos) || ' '}</Text>}
+      {text?.slice(cursorPos + 1)}
     </Text>
   );
 };
@@ -173,6 +186,9 @@ export const FormView = <T extends Record<string, FormItem<unknown>>>({
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
   const [handled, setHandled] = useState(false);
 
+  // Cursor positions for each text/password field (key -> position)
+  const [cursorPositions, setCursorPositions] = useState<Record<string, number>>({});
+
   // Calculate label column width (max label width + padding)
   const maxLabelWidth = Math.max(
     ...items.map((item) =>
@@ -216,6 +232,54 @@ export const FormView = <T extends Record<string, FormItem<unknown>>>({
       return;
     }
 
+    // Arrow Down - next field (unless we're in a text field with cursor not at start)
+    if (key.downArrow)
+    {
+      setFocusedIndex((prev) => (prev + 1) % items.length);
+      return;
+    }
+
+    // Arrow Up - previous field OR move cursor to start in text fields
+    if (key.upArrow)
+    {
+      if (currentItem.type === 'text' || currentItem.type === 'password')
+      {
+        const cursorPos = cursorPositions[currentItem.key] ?? (values[currentItem.key] as string).length;
+        if (cursorPos > 0)
+        {
+          // Move cursor to start
+          setCursorPositions((prev) => ({ ...prev, [currentItem.key]: 0 }));
+          return;
+        }
+      }
+      // Otherwise, move to previous field
+      setFocusedIndex((prev) => (prev - 1 + items.length) % items.length);
+      return;
+    }
+
+    // Arrow Left - move cursor left in text fields
+    if (key.leftArrow && (currentItem.type === 'text' || currentItem.type === 'password'))
+    {
+      const cursorPos = cursorPositions[currentItem.key] ?? (values[currentItem.key] as string).length;
+      if (cursorPos > 0)
+      {
+        setCursorPositions((prev) => ({ ...prev, [currentItem.key]: cursorPos - 1 }));
+      }
+      return;
+    }
+
+    // Arrow Right - move cursor right in text fields
+    if (key.rightArrow && (currentItem.type === 'text' || currentItem.type === 'password'))
+    {
+      const currentStr = values[currentItem.key] as string;
+      const cursorPos = cursorPositions[currentItem.key] ?? currentStr.length;
+      if (cursorPos < currentStr.length)
+      {
+        setCursorPositions((prev) => ({ ...prev, [currentItem.key]: cursorPos + 1 }));
+      }
+      return;
+    }
+
     // Ctrl+Enter - submit from anywhere
     if (key.return && key.ctrl)
     {
@@ -245,22 +309,33 @@ export const FormView = <T extends Record<string, FormItem<unknown>>>({
   {
     const currentValue = values[item.key];
 
-    if (item.type === 'text')
+    if (item.type === 'text' || item.type === 'password')
     {
       let newValue = currentValue as string;
+      const cursorPos = cursorPositions[item.key] ?? newValue.length;
 
       if (key.backspace)
       {
-        newValue = newValue.slice(0, -1);
+        if (cursorPos > 0)
+        {
+          // Delete character before cursor
+          newValue = newValue.slice(0, cursorPos - 1) + newValue.slice(cursorPos);
+          setCursorPositions((prev) => ({ ...prev, [item.key]: cursorPos - 1 }));
+        }
       }
       else if (key.delete)
       {
-        // For now, backspace and delete do the same thing
-        newValue = newValue.slice(0, -1);
+        if (cursorPos < newValue.length)
+        {
+          // Delete character at cursor
+          newValue = newValue.slice(0, cursorPos) + newValue.slice(cursorPos + 1);
+        }
       }
       else if (input)
       {
-        newValue = newValue + input;
+        // Insert character at cursor position
+        newValue = newValue.slice(0, cursorPos) + input + newValue.slice(cursorPos);
+        setCursorPositions((prev) => ({ ...prev, [item.key]: cursorPos + 1 }));
       }
 
       setValues((prev) => ({ ...prev, [item.key]: newValue }));
@@ -428,6 +503,17 @@ export const FormView = <T extends Record<string, FormItem<unknown>>>({
                       value={value as string}
                       placeholder={item.getPlaceholder()}
                       isFocused={isFocused}
+                      cursorPosition={cursorPositions[item.key] ?? (value as string).length}
+                    />
+                  )}
+
+                  {item.type === 'password' && (
+                    <CustomTextInput
+                      value={value as string}
+                      placeholder={item.getPlaceholder()}
+                      isFocused={isFocused}
+                      cursorPosition={cursorPositions[item.key] ?? (value as string).length}
+                      masked={true}
                     />
                   )}
 
