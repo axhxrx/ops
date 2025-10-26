@@ -471,6 +471,6 @@ MIT
 
 ## Happenings
 
-- 2025-10-25: 🤖 release 666.420.69 now works (for some values of "works") with 🥟 Bun and 🦕 Deno 
+- 2025-10-26: 🚀 release: 666.420.6970 — more Deno compatibility, easier `--record`  and `--replay` for CLI apps using this lib
 
-
+- 2025-10-25: 🤖 release 666.420.6969 now works (for some values of "works") with 🥟 Bun and 🦕 Deno 
