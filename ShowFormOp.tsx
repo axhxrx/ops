@@ -211,15 +211,12 @@ if (import.meta.main) {
   console.log(parsedArgs);
   const contactResult = await main(parsedArgs, contactOp);
 
-  // TEMPORARY FOR DEBUG; REMOVE THIS WHEN BUGS ARE FIXED
-  throw new Error("Temporary debug error");
-
   if (contactResult.ok && contactResult.value.type === "submitted") {
     const values = contactResult.value.values;
     console.log("\n✅ Contact form submitted successfully!");
-    console.log(`Name: ${values.name}`);
-    console.log(`Email: ${values.email}`);
-    console.log(`Message: ${values.message || "(empty)"}`);
+    console.log(`Name: ${String(values.name)}`);
+    console.log(`Email: ${String(values.email)}`);
+    console.log(`Message: ${(values.message as string) || "(empty)"}`);
   } else if (
     contactResult.ok === false &&
     contactResult.failure === "canceled"
@@ -285,11 +282,11 @@ if (import.meta.main) {
   if (registrationResult.ok && registrationResult.value.type === "submitted") {
     const values = registrationResult.value.values;
     console.log("\n✅ Registration successful!");
-    console.log(`Username: ${values.username}`);
+    console.log(`Username: ${String(values.username)}`);
     console.log(
       `Password: ${"*".repeat((values.password as string).length)} (masked)`
     );
-    console.log(`Age: ${values.age}`);
+    console.log(`Age: ${String(values.age)}`);
     console.log(`Newsletter: ${values.newsletter ? "Yes" : "No"}`);
     console.log(`Terms accepted: ${values.terms ? "Yes" : "No"}`);
   } else if (
@@ -348,8 +345,8 @@ if (import.meta.main) {
   if (settingsResult.ok && settingsResult.value.type === "submitted") {
     const values = settingsResult.value.values;
     console.log("\n✅ Settings saved!");
-    console.log(`API Key: ${values.apiKey}`);
-    console.log(`Timeout: ${values.timeout} seconds`);
+    console.log(`API Key: ${String(values.apiKey)}`);
+    console.log(`Timeout: ${String(values.timeout)} seconds`);
     console.log(`Logging: ${values.enableLogging ? "Enabled" : "Disabled"}`);
     console.log(`Caching: ${values.enableCache ? "Enabled" : "Disabled"}`);
   } else if (
@@ -407,7 +404,7 @@ if (import.meta.main) {
   if (validationResult.ok && validationResult.value.type === "submitted") {
     const values = validationResult.value.values;
     console.log("\n✅ Validation passed!");
-    console.log(`Email: ${values.email}`);
+    console.log(`Email: ${String(values.email)}`);
     console.log(`Password: ${"*".repeat((values.password as string).length)}`);
   } else if (
     validationResult.ok === false &&

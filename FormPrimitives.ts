@@ -301,7 +301,8 @@ export class Form<T extends Record<string, FormItem<any>>>
    * Create a Form from a record of FormItems
    * TypeScript infers the value types from the items
    */
-  static create<T extends Record<string, FormItem<unknown>>>(items: T): Form<T>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  static create<T extends Record<string, FormItem<any>>>(items: T): Form<T>
   {
     return new Form(items);
   }
