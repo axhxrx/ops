@@ -101,7 +101,8 @@ export type ShowFormOpOptions = {
  * const result = await op.run();
  * ```
  */
-export class ShowFormOp<T extends Record<string, FormItem<unknown>>> extends Op
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export class ShowFormOp<T extends Record<string, FormItem<any>>> extends Op
 {
   name = 'ShowFormOp';
 

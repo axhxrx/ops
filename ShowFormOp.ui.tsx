@@ -1,5 +1,5 @@
 import { Box, Text, useInput, useStdout } from 'ink';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { Form, FormItem } from './FormPrimitives.ts';
 import type { Logger } from './Logger.ts';
 import type { InfoPanel } from './MenuPrimitives.ts';
@@ -8,7 +8,8 @@ import { getDisplayWidth, padToWidth } from './StringUtils.ts';
 /**
  * Props for FormView component
  */
-export interface FormViewProps<T extends Record<string, FormItem<unknown>>>
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface FormViewProps<T extends Record<string, FormItem<any>>>
 {
   /**
    * The form definition
@@ -68,10 +69,10 @@ const CustomTextInput = ({
   const cursorPos = showPlaceholder ? 0 : cursorPosition;
 
   return (
-    <Text color={isFocused ? 'cyan' : undefined} dimColor={showPlaceholder}>
-      {text?.slice(0, cursorPos)}
-      {isFocused && showCursor && <Text inverse>{text?.charAt(cursorPos) || ' '}</Text>}
-      {text?.slice(cursorPos + 1)}
+    <Text color={isFocused ? 'cyan' : undefined} dimColor={showPlaceholder ? true : undefined}>
+      {(text || '').slice(0, cursorPos)}
+      {isFocused && showCursor && <Text inverse>{(text || '').charAt(cursorPos) || ' '}</Text>}
+      {(text || '').slice(cursorPos + 1)}
     </Text>
   );
 };
@@ -79,7 +80,7 @@ const CustomTextInput = ({
 /**
  * Render an InfoPanel (borrowed from MenuOp pattern)
  */
-const renderInfoPanel = (panel: InfoPanel | undefined, terminalWidth: number): JSX.Element | null =>
+const renderInfoPanel = (panel: InfoPanel | undefined, terminalWidth: number): React.JSX.Element | null =>
 {
   if (!panel) return null;
 
@@ -134,7 +135,8 @@ const renderInfoPanel = (panel: InfoPanel | undefined, terminalWidth: number): J
  * />
  * ```
  */
-export const FormView = <T extends Record<string, FormItem<unknown>>>({
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const FormView = <T extends Record<string, FormItem<any>>>({
   form,
   onSubmit,
   onCancel,
@@ -221,21 +223,21 @@ export const FormView = <T extends Record<string, FormItem<unknown>>>({
     // Tab - next field
     if (key.tab && !key.shift)
     {
-      setFocusedIndex((prev) => (prev + 1) % items.length);
+      setFocusedIndex((prev: number) => (prev + 1) % items.length);
       return;
     }
 
     // Shift+Tab - previous field
     if (key.tab && key.shift)
     {
-      setFocusedIndex((prev) => (prev - 1 + items.length) % items.length);
+      setFocusedIndex((prev: number) => (prev - 1 + items.length) % items.length);
       return;
     }
 
     // Arrow Down - next field (unless we're in a text field with cursor not at start)
     if (key.downArrow)
     {
-      setFocusedIndex((prev) => (prev + 1) % items.length);
+      setFocusedIndex((prev: number) => (prev + 1) % items.length);
       return;
     }
 
@@ -248,12 +250,12 @@ export const FormView = <T extends Record<string, FormItem<unknown>>>({
         if (cursorPos > 0)
         {
           // Move cursor to start
-          setCursorPositions((prev) => ({ ...prev, [currentItem.key]: 0 }));
+          setCursorPositions((prev: Record<string, number>) => ({ ...prev, [currentItem.key]: 0 }));
           return;
         }
       }
       // Otherwise, move to previous field
-      setFocusedIndex((prev) => (prev - 1 + items.length) % items.length);
+      setFocusedIndex((prev: number) => (prev - 1 + items.length) % items.length);
       return;
     }
 
@@ -263,7 +265,7 @@ export const FormView = <T extends Record<string, FormItem<unknown>>>({
       const cursorPos = cursorPositions[currentItem.key] ?? (values[currentItem.key] as string).length;
       if (cursorPos > 0)
       {
-        setCursorPositions((prev) => ({ ...prev, [currentItem.key]: cursorPos - 1 }));
+        setCursorPositions((prev: Record<string, number>) => ({ ...prev, [currentItem.key]: cursorPos - 1 }));
       }
       return;
     }
@@ -275,7 +277,7 @@ export const FormView = <T extends Record<string, FormItem<unknown>>>({
       const cursorPos = cursorPositions[currentItem.key] ?? currentStr.length;
       if (cursorPos < currentStr.length)
       {
-        setCursorPositions((prev) => ({ ...prev, [currentItem.key]: cursorPos + 1 }));
+        setCursorPositions((prev: Record<string, number>) => ({ ...prev, [currentItem.key]: cursorPos + 1 }));
       }
       return;
     }
@@ -296,7 +298,7 @@ export const FormView = <T extends Record<string, FormItem<unknown>>>({
       }
       else
       {
-        setFocusedIndex((prev) => (prev + 1) % items.length);
+        setFocusedIndex((prev: number) => (prev + 1) % items.length);
       }
       return;
     }
@@ -305,7 +307,8 @@ export const FormView = <T extends Record<string, FormItem<unknown>>>({
     handleFieldInput(currentItem, input, key);
   });
 
-  const handleFieldInput = (item: FormItem<unknown>, input: string, key: { backspace?: boolean; delete?: boolean }) =>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleFieldInput = (item: FormItem<any>, input: string, key: { backspace?: boolean; delete?: boolean }) =>
   {
     const currentValue = values[item.key];
 
@@ -320,7 +323,7 @@ export const FormView = <T extends Record<string, FormItem<unknown>>>({
         {
           // Delete character before cursor
           newValue = newValue.slice(0, cursorPos - 1) + newValue.slice(cursorPos);
-          setCursorPositions((prev) => ({ ...prev, [item.key]: cursorPos - 1 }));
+          setCursorPositions((prev: Record<string, number>) => ({ ...prev, [item.key]: cursorPos - 1 }));
         }
       }
       else if (key.delete)
@@ -335,16 +338,16 @@ export const FormView = <T extends Record<string, FormItem<unknown>>>({
       {
         // Insert character at cursor position
         newValue = newValue.slice(0, cursorPos) + input + newValue.slice(cursorPos);
-        setCursorPositions((prev) => ({ ...prev, [item.key]: cursorPos + 1 }));
+        setCursorPositions((prev: Record<string, number>) => ({ ...prev, [item.key]: cursorPos + 1 }));
       }
 
-      setValues((prev) => ({ ...prev, [item.key]: newValue }));
+      setValues((prev: Record<string, unknown>) => ({ ...prev, [item.key]: newValue }));
 
       // Validate on change if user has attempted submit
       if (hasAttemptedSubmit)
       {
         const error = item.validate(newValue);
-        setErrors((prev) => ({ ...prev, [item.key]: error ?? '' }));
+        setErrors((prev: Record<string, string>) => ({ ...prev, [item.key]: error ?? '' }));
       }
     }
     else if (item.type === 'number')
@@ -368,13 +371,13 @@ export const FormView = <T extends Record<string, FormItem<unknown>>>({
         }
       }
 
-      setValues((prev) => ({ ...prev, [item.key]: newValue }));
+      setValues((prev: Record<string, unknown>) => ({ ...prev, [item.key]: newValue }));
 
       // Validate on change if user has attempted submit
       if (hasAttemptedSubmit)
       {
         const error = item.validate(newValue);
-        setErrors((prev) => ({ ...prev, [item.key]: error ?? '' }));
+        setErrors((prev: Record<string, string>) => ({ ...prev, [item.key]: error ?? '' }));
       }
     }
     else if (item.type === 'boolean')
@@ -383,13 +386,13 @@ export const FormView = <T extends Record<string, FormItem<unknown>>>({
       if (input === ' ' || input === 'y' || input === 'n')
       {
         const newValue = input === 'n' ? false : input === 'y' ? true : !(currentValue as boolean);
-        setValues((prev) => ({ ...prev, [item.key]: newValue }));
+        setValues((prev: Record<string, unknown>) => ({ ...prev, [item.key]: newValue }));
 
         // Validate on change if user has attempted submit
         if (hasAttemptedSubmit)
         {
           const error = item.validate(newValue);
-          setErrors((prev) => ({ ...prev, [item.key]: error ?? '' }));
+          setErrors((prev: Record<string, string>) => ({ ...prev, [item.key]: error ?? '' }));
         }
       }
     }

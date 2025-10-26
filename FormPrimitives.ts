@@ -270,7 +270,8 @@ type FormItemValue<T> = T extends FormItem<infer V> ? V : never;
 /**
  * Convert a record of FormItems to a record of their value types
  */
-type FormValues<T extends Record<string, FormItem<unknown>>> = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type FormValues<T extends Record<string, FormItem<any>>> = {
   [K in keyof T]: FormItemValue<T[K]>;
 };
 
@@ -293,7 +294,8 @@ type FormValues<T extends Record<string, FormItem<unknown>>> = {
  * // form is Form<{ name: string, email: string, age: number }>
  * ```
  */
-export class Form<T extends Record<string, FormItem<unknown>>>
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export class Form<T extends Record<string, FormItem<any>>>
 {
   /**
    * Create a Form from a record of FormItems
