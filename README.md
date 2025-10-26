@@ -10,7 +10,7 @@ You probably do not want to use this, therefore, unless perhaps you are also exp
 
 ## What is This?
 
-The Ops Pattern is a simplification pattern that provides a constrained, fewer-choices-to-make way to structure CLI applications. Every action — from basic user interactions like confirmation prompts abd menus, to making network requests, to executing subcommands or processsing files, or whatever business logic, is implemented as an **Op** that returns a standardized `Outcome`.
+The Ops Pattern is a simplification pattern that provides a constrained, fewer-choices-to-make way to structure CLI applications. Every action — from basic user interactions like confirmation prompts abd (😅 you can tell a human wrote _this_ part, right, but not a lot of what follows...) menus, to making network requests, to executing subcommands or processsing files, or whatever business logic, is implemented as an **Op** that returns a standardized `Outcome`.
 
 Ops compose naturally, are independently testable, often also independently runnable as command-line tools, and provide a framework for implementing observability, monitoring, and logging.
 

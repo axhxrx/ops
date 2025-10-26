@@ -4,6 +4,7 @@ import type { IOContext } from './IOContext.ts';
 import { Op } from './Op.ts';
 import { EditTextOp, type EditTextOpOptions } from './EditTextOp.tsx';
 import { SelectFromListOp, type RichOption } from './SelectFromListOp.tsx';
+import { which } from './runtime-utils.ts';
 
 /**
  Known editors with their commands and detection methods
@@ -90,10 +91,10 @@ export class EditTextWithEditorOp extends Op
     {
       try
       {
-        const which = Bun.which(editor.executable);
-        if (which)
+        const editorPath = which(editor.executable);
+        if (editorPath)
         {
-          this.log(io, `Found ${editor.name}: ${which}`);
+          this.log(io, `Found ${editor.name}: ${editorPath}`);
           // Don't add duplicates (e.g., if $EDITOR is 'vim' and we also found vim)
           if (!available.includes(editor.command))
           {

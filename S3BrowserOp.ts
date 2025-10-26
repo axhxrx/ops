@@ -313,7 +313,7 @@ if (import.meta.main)
 {
   const { RenderMarkdownOp } = await import('./RenderMarkdownOp.tsx');
 
-  const bucket = Bun.argv[2] || process.env.S3_BUCKET;
+  const bucket = process.argv[2] || process.env.S3_BUCKET;
 
   if (!bucket)
   {

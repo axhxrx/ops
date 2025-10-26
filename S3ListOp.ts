@@ -277,8 +277,8 @@ if (import.meta.main)
   console.log('☁️  S3ListOp Demo\n');
 
   // This demo requires credentials in environment variables
-  const bucket = Bun.argv[2] || process.env.S3_BUCKET || 'test-bucket';
-  const prefix = Bun.argv[3] || '';
+  const bucket = process.argv[2] || process.env.S3_BUCKET || 'test-bucket';
+  const prefix = process.argv[3] || '';
 
   console.log(`Listing bucket: ${bucket}`);
   console.log(`Prefix: ${prefix || '(root)'}\n`);

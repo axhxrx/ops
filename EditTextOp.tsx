@@ -1,7 +1,8 @@
 #!/usr/bin/env bun
 
+import { spawn } from 'node:child_process';
 import { render } from 'ink';
-import { unlink } from 'node:fs/promises';
+import { readFile, unlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { EditTextInput } from './EditTextOp.ui.tsx';
@@ -139,7 +140,7 @@ export class EditTextOp extends Op
     try
     {
       // Write initial content to temp file
-      await Bun.write(tempFile, this.options.initialValue ?? '');
+      await writeFile(tempFile, this.options.initialValue ?? '', 'utf-8');
 
       this.log(io, `Opening ${this.options.externalEditor} with temp file: ${tempFile}`);
 
@@ -149,14 +150,15 @@ export class EditTextOp extends Op
       const editorArgs = [...editorParts.slice(1), tempFile];
 
       // Spawn editor and wait for it to exit
-      const proc = Bun.spawn({
-        cmd: [editorCmd, ...editorArgs],
-        stdin: 'inherit',
-        stdout: 'inherit',
-        stderr: 'inherit',
+      const proc = spawn(editorCmd, editorArgs, {
+        stdio: 'inherit',
       });
 
-      const exitCode = await proc.exited;
+      const exitCode = await new Promise<number>((resolve, reject) =>
+      {
+        proc.on('exit', (code) => resolve(code ?? 1));
+        proc.on('error', reject);
+      });
 
       if (exitCode !== 0)
       {
@@ -169,8 +171,7 @@ export class EditTextOp extends Op
       }
 
       // Read edited content
-      const file = Bun.file(tempFile);
-      const content = await file.text();
+      const content = await readFile(tempFile, 'utf-8');
 
       this.log(io, `Read ${content.length} characters from temp file`);
 

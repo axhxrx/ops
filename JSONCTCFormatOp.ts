@@ -1,9 +1,11 @@
 #!/usr/bin/env bun
 
+import { readFile } from 'node:fs/promises';
 import { applyEdits, format, type FormattingOptions } from 'jsonc-parser';
 import type { IOContext } from './IOContext.ts';
 import { Op } from './Op.ts';
 import type { Failure, Success } from './Outcome.ts';
+import { readStdin } from './runtime-utils.ts';
 
 /**
  Options for JSONCTC formatting
@@ -145,14 +147,14 @@ if (import.meta.main)
   if (args[0] === '-')
   {
     // Read from stdin
-    input = await Bun.stdin.text();
+    input = await readStdin();
   }
   else
   {
     // Read from file
     try
     {
-      input = await Bun.file(args[0]!).text();
+      input = await readFile(args[0]!, 'utf-8');
     }
     catch (error: unknown)
     {

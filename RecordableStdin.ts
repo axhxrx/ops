@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { EventEmitter } from 'node:events';
-
 import type { Buffer } from 'node:buffer';
-
+import { EventEmitter } from 'node:events';
+import { writeFile } from 'node:fs/promises';
+import process from 'node:process';
 /**
  Represents a single input event (keystroke)
  */
@@ -86,7 +86,7 @@ export class RecordableStdin extends EventEmitter
       events: this.recording,
     };
 
-    await Bun.write(path, JSON.stringify(session, null, 2));
+    await writeFile(path, JSON.stringify(session, null, 2), 'utf-8');
     console.log(`\n[RecordableStdin] 💾 Session saved to: ${path}`);
     console.log(`[RecordableStdin] 📊 Recorded ${this.recording.length} input events`);
   }

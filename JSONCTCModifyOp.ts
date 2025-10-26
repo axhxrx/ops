@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
 
+import { readFile } from 'node:fs/promises';
 import { applyEdits, modify, type FormattingOptions, type ModificationOptions } from 'jsonc-parser';
 import type { IOContext } from './IOContext.ts';
 import { Op } from './Op.ts';
@@ -165,7 +166,7 @@ if (import.meta.main)
   let input: string;
   try
   {
-    input = await Bun.file(filename).text();
+    input = await readFile(filename, 'utf-8');
   }
   catch (error: unknown)
   {

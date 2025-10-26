@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 
 import { S3Client } from 'bun';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { access, mkdir, writeFile } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import type { IOContext } from './IOContext.ts';
 import { Op } from './Op.ts';
@@ -208,12 +208,22 @@ export class S3DownloadOp extends Op
     {
       try
       {
-        await Bun.file(localPath).exists();
+        await access(localPath);
+        // If access() doesn't throw, file exists
         throw new Error(`File exists: ${localPath}`);
       }
-      catch
+      catch (error: unknown)
       {
-        // File doesn't exist, continue
+        // If error is ENOENT (file doesn't exist), continue
+        // Otherwise, re-throw (it's our "File exists" error)
+        if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT')
+        {
+          // File doesn't exist, continue
+        }
+        else
+        {
+          throw error;
+        }
       }
     }
 

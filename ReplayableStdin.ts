@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { EventEmitter } from 'node:events';
+import { readFile } from 'node:fs/promises';
 import type { InputEvent, Session } from './RecordableStdin.ts';
 import { Buffer } from "node:buffer";
 /**
@@ -51,7 +52,7 @@ export class ReplayableStdin extends EventEmitter
    */
   static async create(sessionPath: string): Promise<ReplayableStdin>
   {
-    const sessionContent = await Bun.file(sessionPath).text();
+    const sessionContent = await readFile(sessionPath, 'utf-8');
     const session = JSON.parse(sessionContent) as Session;
     return new ReplayableStdin(session, sessionPath);
   }

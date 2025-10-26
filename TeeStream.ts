@@ -4,6 +4,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-floating-promises */
+import { createWriteStream, type WriteStream } from 'node:fs';
 import { Writable } from 'node:stream';
 import { stripAnsi } from './stripAnsi.ts';
 
@@ -27,7 +28,7 @@ export type TeeStreamOptions = {
  */
 export class TeeStream extends Writable
 {
-  private logWriter: ReturnType<typeof Bun.file> & { write: (chunk: string) => void };
+  private logWriter: WriteStream;
   private logPath: string;
   private options: TeeStreamOptions;
 
@@ -36,8 +37,8 @@ export class TeeStream extends Writable
     super();
     this.logPath = logPath;
     this.options = options;
-    // Bun.file().writer() returns a writable stream
-    this.logWriter = Bun.file(logPath).writer() as any;
+    // Create a write stream to the log file
+    this.logWriter = createWriteStream(logPath);
   }
 
   /**

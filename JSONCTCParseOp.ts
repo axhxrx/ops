@@ -1,9 +1,11 @@
 #!/usr/bin/env bun
 
+import { readFile } from 'node:fs/promises';
 import { parse, type ParseError, type ParseOptions } from 'jsonc-parser';
 import type { IOContext } from './IOContext.ts';
 import { Op } from './Op.ts';
 import type { Failure, Success } from './Outcome.ts';
+import { readStdin } from './runtime-utils.ts';
 
 /**
  Options for JSONCTC parsing
@@ -53,8 +55,9 @@ export interface JSONCTCParseOptions
 
  @example
  ```typescript
- // Parse from CLI
- const json = await Bun.file('config.jsonctc').text();
+ // Parse from file
+ import { readFile } from 'node:fs/promises';
+ const json = await readFile('config.jsonctc', 'utf-8');
  const op = new JSONCTCParseOp(json);
  ```
  */
@@ -132,7 +135,7 @@ if (import.meta.main)
   if (args[0] === '-')
   {
     // Read from stdin
-    input = await Bun.stdin.text();
+    input = await readStdin();
   }
   else if (args[0]!.startsWith('{') || args[0]!.startsWith('['))
   {
@@ -144,7 +147,7 @@ if (import.meta.main)
     // Read from file
     try
     {
-      input = await Bun.file(args[0]!).text();
+      input = await readFile(args[0]!, 'utf-8');
     }
     catch (error: unknown)
     {

@@ -2,10 +2,11 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import process from 'node:process';
 import type { IOContext } from './IOContext.ts';
 import { Op } from './Op.ts';
 import type { Failure, Success } from './Outcome.ts';
-
+import { readStdin } from './runtime-utils.ts';
 /**
  * Generic file writer that accepts either a string OR an object with toString() method.
  *
@@ -129,11 +130,12 @@ if (import.meta.main)
 
   if (args.length < 1)
   {
-    console.error('Usage: bun FileWriteOp.ts <file> [content]');
-    console.error('       echo "content" | bun FileWriteOp.ts <file> -');
+    console.error('Usage: FileWriteOp.ts <file> [content]');
+    console.error('       echo "content" | FileWriteOp.ts <file> -');
     console.error('');
     console.error('Examples:');
     console.error('  bun FileWriteOp.ts output.txt "Hello, world!"');
+    console.error('  deno FileWriteOp.ts output.txt "Hello, world!"');
     console.error('  echo "Hello from stdin" | bun FileWriteOp.ts output.txt -');
     process.exit(1);
   }
@@ -145,7 +147,7 @@ if (import.meta.main)
   if (args.length === 1 || args[1] === '-')
   {
     // Read from stdin
-    const stdinContent = await Bun.stdin.text();
+    const stdinContent = await readStdin();
     content = stdinContent;
   }
   else
