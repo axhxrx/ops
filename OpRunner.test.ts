@@ -1,7 +1,7 @@
-import { test, expect, describe } from 'bun:test';
-import { OpRunner } from './OpRunner.ts';
-import { Op } from './Op.ts';
+import { describe, expect, test } from 'bun:test';
 import type { IOContext } from './IOContext.ts';
+import { Op } from './Op.ts';
+import { OpRunner } from './OpRunner.ts';
 import type { OutcomeHandler } from './Outcome.ts';
 
 /**
@@ -72,7 +72,7 @@ class ScriptedOp extends Op
 /**
  * Helper to capture stack states at each execution step
  */
-async function captureExecution(runner: OpRunner): Promise<string[][]>
+async function captureExecution(runner: OpRunner<Op>): Promise<string[][]>
 {
   const states: string[][] = [];
 
@@ -107,7 +107,8 @@ function logStackEvolution(states: string[][])
   if (!DEBUG) return;
 
   console.log('\n📚 Stack Evolution:');
-  states.forEach((state, i) => {
+  states.forEach((state, i) =>
+  {
     console.log(`  Step ${i}: ${formatStack(state)}`);
   });
   console.log('');
@@ -117,10 +118,12 @@ function logStackEvolution(states: string[][])
 // BASIC EXECUTION TESTS
 // =============================================================================
 
-describe('Basic Execution', () => {
-  test('Single op succeeds', async () => {
+describe('Basic Execution', () =>
+{
+  test('Single op succeeds', async () =>
+  {
     const op = new ScriptedOp('SingleOp', [
-      { type: 'succeed', value: 'done' }
+      { type: 'succeed', value: 'done' },
     ]);
 
     const runner = await OpRunner.create(op, { mode: 'test' });
@@ -129,14 +132,15 @@ describe('Basic Execution', () => {
     logStackEvolution(states);
 
     expect(states).toEqual([
-      ['SingleOp'],  // Initial
-      []             // After completion
+      ['SingleOp'], // Initial
+      [], // After completion
     ]);
   });
 
-  test('Single op fails', async () => {
+  test('Single op fails', async () =>
+  {
     const op = new ScriptedOp('FailingOp', [
-      { type: 'fail', failure: 'error occurred' }
+      { type: 'fail', failure: 'error occurred' },
     ]);
 
     const runner = await OpRunner.create(op, { mode: 'test' });
@@ -145,18 +149,19 @@ describe('Basic Execution', () => {
     logStackEvolution(states);
 
     expect(states).toEqual([
-      ['FailingOp'],  // Initial
-      []              // After failure
+      ['FailingOp'], // Initial
+      [], // After failure
     ]);
   });
 
-  test('Op replaces itself with another op', async () => {
+  test('Op replaces itself with another op', async () =>
+  {
     const nextOp = new ScriptedOp('NextOp', [
-      { type: 'succeed', value: 'done' }
+      { type: 'succeed', value: 'done' },
     ]);
 
     const firstOp = new ScriptedOp('FirstOp', [
-      { type: 'replaceWith', nextOp }
+      { type: 'replaceWith', nextOp },
     ]);
 
     const runner = await OpRunner.create(firstOp, { mode: 'test' });
@@ -165,23 +170,24 @@ describe('Basic Execution', () => {
     logStackEvolution(states);
 
     expect(states).toEqual([
-      ['FirstOp'],  // Initial
-      ['NextOp'],   // After replacement
-      []            // After NextOp completes
+      ['FirstOp'], // Initial
+      ['NextOp'], // After replacement
+      [], // After NextOp completes
     ]);
   });
 
-  test('Multiple sequential replacements', async () => {
+  test('Multiple sequential replacements', async () =>
+  {
     const op3 = new ScriptedOp('Op3', [
-      { type: 'succeed', value: 'done' }
+      { type: 'succeed', value: 'done' },
     ]);
 
     const op2 = new ScriptedOp('Op2', [
-      { type: 'replaceWith', nextOp: op3 }
+      { type: 'replaceWith', nextOp: op3 },
     ]);
 
     const op1 = new ScriptedOp('Op1', [
-      { type: 'replaceWith', nextOp: op2 }
+      { type: 'replaceWith', nextOp: op2 },
     ]);
 
     const runner = await OpRunner.create(op1, { mode: 'test' });
@@ -190,10 +196,10 @@ describe('Basic Execution', () => {
     logStackEvolution(states);
 
     expect(states).toEqual([
-      ['Op1'],   // Initial
-      ['Op2'],   // After first replacement
-      ['Op3'],   // After second replacement
-      []         // After Op3 completes
+      ['Op1'], // Initial
+      ['Op2'], // After first replacement
+      ['Op3'], // After second replacement
+      [], // After Op3 completes
     ]);
   });
 });
@@ -202,15 +208,17 @@ describe('Basic Execution', () => {
 // HANDLEOUTCOME - BASIC TESTS
 // =============================================================================
 
-describe('HandleOutcome - Basic', () => {
-  test('Parent → Child with default handler (parent re-runs)', async () => {
+describe('HandleOutcome - Basic', () =>
+{
+  test('Parent → Child with default handler (parent re-runs)', async () =>
+  {
     const child = new ScriptedOp('Child', [
-      { type: 'succeed', value: 'done' }
+      { type: 'succeed', value: 'done' },
     ]);
 
     const parent = new ScriptedOp('Parent', [
-      { type: 'handleOutcome', child },  // First run
-      { type: 'succeed', value: 'finished' }  // Second run (after default handler returns this)
+      { type: 'handleOutcome', child }, // First run
+      { type: 'succeed', value: 'finished' }, // Second run (after default handler returns this)
     ]);
 
     const runner = await OpRunner.create(parent, { mode: 'test' });
@@ -219,59 +227,62 @@ describe('HandleOutcome - Basic', () => {
     logStackEvolution(states);
 
     expect(states).toEqual([
-      ['Parent'],                // Initial
-      ['Handler<Parent>', 'Child'],  // After handleOutcome
-      ['Parent'],                // After child completes, handler returned parent
-      []                         // After parent completes
-    ]);
-  });
-
-  test('Parent → Child with custom handler (returns different op)', async () => {
-    const nextOp = new ScriptedOp('NextOp', [
-      { type: 'succeed', value: 'done' }
-    ]);
-
-    const child = new ScriptedOp('Child', [
-      { type: 'succeed', value: 'child done' }
-    ]);
-
-    const parent = new ScriptedOp('Parent', [
-      { type: 'handleOutcome', child, handler: () => nextOp }
-    ]);
-
-    const runner = await OpRunner.create(parent, { mode: 'test' });
-    const states = await captureExecution(runner);
-
-    logStackEvolution(states);
-
-    expect(states).toEqual([
-      ['Parent'],                   // Initial
+      ['Parent'], // Initial
       ['Handler<Parent>', 'Child'], // After handleOutcome
-      ['NextOp'],                   // After child completes, handler returned NextOp
-      []                            // After NextOp completes
+      ['Parent'], // After child completes, handler returned parent
+      [], // After parent completes
     ]);
   });
 
-  test('Handler receives success outcome', async () => {
+  test('Parent → Child with custom handler (returns different op)', async () =>
+  {
+    const nextOp = new ScriptedOp('NextOp', [
+      { type: 'succeed', value: 'done' },
+    ]);
+
+    const child = new ScriptedOp('Child', [
+      { type: 'succeed', value: 'child done' },
+    ]);
+
+    const parent = new ScriptedOp('Parent', [
+      { type: 'handleOutcome', child, handler: () => nextOp },
+    ]);
+
+    const runner = await OpRunner.create(parent, { mode: 'test' });
+    const states = await captureExecution(runner);
+
+    logStackEvolution(states);
+
+    expect(states).toEqual([
+      ['Parent'], // Initial
+      ['Handler<Parent>', 'Child'], // After handleOutcome
+      ['NextOp'], // After child completes, handler returned NextOp
+      [], // After NextOp completes
+    ]);
+  });
+
+  test('Handler receives success outcome', async () =>
+  {
     let receivedOutcome: unknown;
 
     const child = new ScriptedOp('Child', [
-      { type: 'succeed', value: 'success value' }
+      { type: 'succeed', value: 'success value' },
     ]);
 
     const nextOp = new ScriptedOp('NextOp', [
-      { type: 'succeed', value: null }
+      { type: 'succeed', value: null },
     ]);
 
     const parent = new ScriptedOp('Parent', [
       {
         type: 'handleOutcome',
         child,
-        handler: (outcome) => {
+        handler: (outcome) =>
+        {
           receivedOutcome = outcome;
           return nextOp;
-        }
-      }
+        },
+      },
     ]);
 
     const runner = await OpRunner.create(parent, { mode: 'test' });
@@ -279,30 +290,32 @@ describe('HandleOutcome - Basic', () => {
 
     expect(receivedOutcome).toEqual({
       ok: true,
-      value: 'success value'
+      value: 'success value',
     });
   });
 
-  test('Handler receives failure outcome', async () => {
+  test('Handler receives failure outcome', async () =>
+  {
     let receivedOutcome: unknown;
 
     const child = new ScriptedOp('Child', [
-      { type: 'fail', failure: 'child error' }
+      { type: 'fail', failure: 'child error' },
     ]);
 
     const nextOp = new ScriptedOp('NextOp', [
-      { type: 'succeed', value: null }
+      { type: 'succeed', value: null },
     ]);
 
     const parent = new ScriptedOp('Parent', [
       {
         type: 'handleOutcome',
         child,
-        handler: (outcome) => {
+        handler: (outcome) =>
+        {
           receivedOutcome = outcome;
           return nextOp;
-        }
-      }
+        },
+      },
     ]);
 
     const runner = await OpRunner.create(parent, { mode: 'test' });
@@ -310,22 +323,23 @@ describe('HandleOutcome - Basic', () => {
 
     expect(receivedOutcome).toEqual({
       ok: false,
-      failure: 'child error'
+      failure: 'child error',
     });
   });
 
-  test('Parent loops 3 times using default handler', async () => {
+  test('Parent loops 3 times using default handler', async () =>
+  {
     const child = new ScriptedOp('Child', [
       { type: 'succeed', value: 1 },
       { type: 'succeed', value: 2 },
-      { type: 'succeed', value: 3 }
+      { type: 'succeed', value: 3 },
     ]);
 
     const parent = new ScriptedOp('Parent', [
-      { type: 'handleOutcome', child },  // Loop 1
-      { type: 'handleOutcome', child },  // Loop 2
-      { type: 'handleOutcome', child },  // Loop 3
-      { type: 'succeed', value: 'done' } // Exit
+      { type: 'handleOutcome', child }, // Loop 1
+      { type: 'handleOutcome', child }, // Loop 2
+      { type: 'handleOutcome', child }, // Loop 3
+      { type: 'succeed', value: 'done' }, // Exit
     ]);
 
     const runner = await OpRunner.create(parent, { mode: 'test' });
@@ -343,20 +357,22 @@ describe('HandleOutcome - Basic', () => {
 // NESTING & DEEP STACKS
 // =============================================================================
 
-describe('Nesting & Deep Stacks', () => {
-  test('2-level nesting: A → B → C', async () => {
+describe('Nesting & Deep Stacks', () =>
+{
+  test('2-level nesting: A → B → C', async () =>
+  {
     const c = new ScriptedOp('C', [
-      { type: 'succeed', value: 'c done' }
+      { type: 'succeed', value: 'c done' },
     ]);
 
     const b = new ScriptedOp('B', [
       { type: 'handleOutcome', child: c },
-      { type: 'succeed', value: 'b done' }
+      { type: 'succeed', value: 'b done' },
     ]);
 
     const a = new ScriptedOp('A', [
       { type: 'handleOutcome', child: b },
-      { type: 'succeed', value: 'a done' }
+      { type: 'succeed', value: 'a done' },
     ]);
 
     const runner = await OpRunner.create(a, { mode: 'test' });
@@ -365,33 +381,34 @@ describe('Nesting & Deep Stacks', () => {
     logStackEvolution(states);
 
     expect(states).toEqual([
-      ['A'],                                  // Initial
-      ['Handler<A>', 'B'],                    // A → B
-      ['Handler<A>', 'Handler<B>', 'C'],     // B → C
-      ['Handler<A>', 'B'],                    // C completes, B re-runs
-      ['A'],                                  // B completes, A re-runs
-      []                                      // A completes
+      ['A'], // Initial
+      ['Handler<A>', 'B'], // A → B
+      ['Handler<A>', 'Handler<B>', 'C'], // B → C
+      ['Handler<A>', 'B'], // C completes, B re-runs
+      ['A'], // B completes, A re-runs
+      [], // A completes
     ]);
   });
 
-  test('3-level nesting: A → B → C → D', async () => {
+  test('3-level nesting: A → B → C → D', async () =>
+  {
     const d = new ScriptedOp('D', [
-      { type: 'succeed', value: 'd done' }
+      { type: 'succeed', value: 'd done' },
     ]);
 
     const c = new ScriptedOp('C', [
       { type: 'handleOutcome', child: d },
-      { type: 'succeed', value: 'c done' }
+      { type: 'succeed', value: 'c done' },
     ]);
 
     const b = new ScriptedOp('B', [
       { type: 'handleOutcome', child: c },
-      { type: 'succeed', value: 'b done' }
+      { type: 'succeed', value: 'b done' },
     ]);
 
     const a = new ScriptedOp('A', [
       { type: 'handleOutcome', child: b },
-      { type: 'succeed', value: 'a done' }
+      { type: 'succeed', value: 'a done' },
     ]);
 
     const runner = await OpRunner.create(a, { mode: 'test' });
@@ -406,41 +423,44 @@ describe('Nesting & Deep Stacks', () => {
     expect(states[states.length - 1]).toEqual([]); // Final state is empty
   });
 
-  test('Deep unwinding: handlers fire in correct order', async () => {
+  test('Deep unwinding: handlers fire in correct order', async () =>
+  {
     const executionOrder: string[] = [];
 
     const c = new ScriptedOp('C', [
-      { type: 'succeed', value: 'c' }
+      { type: 'succeed', value: 'c' },
     ]);
 
     const nextB = new ScriptedOp('NextB', [
-      { type: 'succeed', value: null }
+      { type: 'succeed', value: null },
     ]);
 
     const nextA = new ScriptedOp('NextA', [
-      { type: 'succeed', value: null }
+      { type: 'succeed', value: null },
     ]);
 
     const b = new ScriptedOp('B', [
       {
         type: 'handleOutcome',
         child: c,
-        handler: (_outcome) => {
+        handler: (_outcome) =>
+        {
           executionOrder.push('B handler');
           return nextB;
-        }
-      }
+        },
+      },
     ]);
 
     const a = new ScriptedOp('A', [
       {
         type: 'handleOutcome',
         child: b,
-        handler: (_outcome) => {
+        handler: (_outcome) =>
+        {
           executionOrder.push('A handler');
           return nextA;
-        }
-      }
+        },
+      },
     ]);
 
     const runner = await OpRunner.create(a, { mode: 'test' });
@@ -450,26 +470,27 @@ describe('Nesting & Deep Stacks', () => {
     expect(executionOrder).toEqual(['B handler', 'A handler']);
   });
 
-  test('Mixed handlers: some default, some custom', async () => {
+  test('Mixed handlers: some default, some custom', async () =>
+  {
     const nextOp = new ScriptedOp('NextOp', [
-      { type: 'succeed', value: null }
+      { type: 'succeed', value: null },
     ]);
 
     const c = new ScriptedOp('C', [
-      { type: 'succeed', value: 'c' }
+      { type: 'succeed', value: 'c' },
     ]);
 
     const b = new ScriptedOp('B', [
       { type: 'handleOutcome', child: c }, // Default handler
-      { type: 'succeed', value: 'b done' }
+      { type: 'succeed', value: 'b done' },
     ]);
 
     const a = new ScriptedOp('A', [
       {
         type: 'handleOutcome',
         child: b,
-        handler: () => nextOp // Custom handler
-      }
+        handler: () => nextOp, // Custom handler
+      },
     ]);
 
     const runner = await OpRunner.create(a, { mode: 'test' });
@@ -482,19 +503,20 @@ describe('Nesting & Deep Stacks', () => {
     expect(states).toContainEqual(['NextOp']); // A's custom handler
   });
 
-  test('Stack depth verification at each step', async () => {
+  test('Stack depth verification at each step', async () =>
+  {
     const c = new ScriptedOp('C', [
-      { type: 'succeed', value: 'c' }
+      { type: 'succeed', value: 'c' },
     ]);
 
     const b = new ScriptedOp('B', [
       { type: 'handleOutcome', child: c },
-      { type: 'succeed', value: 'b' }
+      { type: 'succeed', value: 'b' },
     ]);
 
     const a = new ScriptedOp('A', [
       { type: 'handleOutcome', child: b },
-      { type: 'succeed', value: 'a' }
+      { type: 'succeed', value: 'a' },
     ]);
 
     const runner = await OpRunner.create(a, { mode: 'test' });
@@ -504,7 +526,7 @@ describe('Nesting & Deep Stacks', () => {
     const depths = states.map(s => s.length);
 
     // Should start at 1, grow to 3, then shrink back to 0
-    expect(depths[0]).toBe(1);  // [A]
+    expect(depths[0]).toBe(1); // [A]
     expect(Math.max(...depths)).toBe(3); // [Handler<A>, Handler<B>, C]
     expect(depths[depths.length - 1]).toBe(0); // []
   });
@@ -514,26 +536,28 @@ describe('Nesting & Deep Stacks', () => {
 // COMPLEX FLOWS
 // =============================================================================
 
-describe('Complex Flows', () => {
-  test('Conditional branching: handler chooses op based on outcome', async () => {
+describe('Complex Flows', () =>
+{
+  test('Conditional branching: handler chooses op based on outcome', async () =>
+  {
     const successOp = new ScriptedOp('SuccessPath', [
-      { type: 'succeed', value: 'success handled' }
+      { type: 'succeed', value: 'success handled' },
     ]);
 
     const failureOp = new ScriptedOp('FailurePath', [
-      { type: 'succeed', value: 'failure handled' }
+      { type: 'succeed', value: 'failure handled' },
     ]);
 
     const child = new ScriptedOp('Child', [
-      { type: 'fail', failure: 'child failed' }
+      { type: 'fail', failure: 'child failed' },
     ]);
 
     const parent = new ScriptedOp('Parent', [
       {
         type: 'handleOutcome',
         child,
-        handler: (outcome) => outcome.ok ? successOp : failureOp
-      }
+        handler: (outcome) => outcome.ok ? successOp : failureOp,
+      },
     ]);
 
     const runner = await OpRunner.create(parent, { mode: 'test' });
@@ -546,24 +570,25 @@ describe('Complex Flows', () => {
     expect(states).not.toContainEqual(['SuccessPath']);
   });
 
-  test('Sequential children: Parent → Child1, then Child2, then Child3', async () => {
+  test('Sequential children: Parent → Child1, then Child2, then Child3', async () =>
+  {
     const child3 = new ScriptedOp('Child3', [
-      { type: 'succeed', value: 3 }
+      { type: 'succeed', value: 3 },
     ]);
 
     const child2 = new ScriptedOp('Child2', [
-      { type: 'succeed', value: 2 }
+      { type: 'succeed', value: 2 },
     ]);
 
     const child1 = new ScriptedOp('Child1', [
-      { type: 'succeed', value: 1 }
+      { type: 'succeed', value: 1 },
     ]);
 
     const parent = new ScriptedOp('Parent', [
-      { type: 'handleOutcome', child: child1 },  // Run child1
-      { type: 'handleOutcome', child: child2 },  // Then child2
-      { type: 'handleOutcome', child: child3 },  // Then child3
-      { type: 'succeed', value: 'all done' }     // Finally complete
+      { type: 'handleOutcome', child: child1 }, // Run child1
+      { type: 'handleOutcome', child: child2 }, // Then child2
+      { type: 'handleOutcome', child: child3 }, // Then child3
+      { type: 'succeed', value: 'all done' }, // Finally complete
     ]);
 
     const runner = await OpRunner.create(parent, { mode: 'test' });
@@ -577,18 +602,19 @@ describe('Complex Flows', () => {
     expect(states.filter(s => s.includes('Child3')).length).toBeGreaterThan(0);
   });
 
-  test('Child replaces itself mid-execution', async () => {
+  test('Child replaces itself mid-execution', async () =>
+  {
     const nextOp = new ScriptedOp('NextOp', [
-      { type: 'succeed', value: 'done' }
+      { type: 'succeed', value: 'done' },
     ]);
 
     const child = new ScriptedOp('Child', [
-      { type: 'replaceWith', nextOp }
+      { type: 'replaceWith', nextOp },
     ]);
 
     const parent = new ScriptedOp('Parent', [
       { type: 'handleOutcome', child },
-      { type: 'succeed', value: 'parent done' }
+      { type: 'succeed', value: 'parent done' },
     ]);
 
     const runner = await OpRunner.create(parent, { mode: 'test' });
@@ -600,26 +626,27 @@ describe('Complex Flows', () => {
     expect(states).toContainEqual(['Handler<Parent>', 'NextOp']);
   });
 
-  test('Handler returns op that has its own child', async () => {
+  test('Handler returns op that has its own child', async () =>
+  {
     const grandchild = new ScriptedOp('Grandchild', [
-      { type: 'succeed', value: 'gc done' }
+      { type: 'succeed', value: 'gc done' },
     ]);
 
     const childFromHandler = new ScriptedOp('ChildFromHandler', [
       { type: 'handleOutcome', child: grandchild },
-      { type: 'succeed', value: 'cfh done' }
+      { type: 'succeed', value: 'cfh done' },
     ]);
 
     const child = new ScriptedOp('Child', [
-      { type: 'succeed', value: 'child done' }
+      { type: 'succeed', value: 'child done' },
     ]);
 
     const parent = new ScriptedOp('Parent', [
       {
         type: 'handleOutcome',
         child,
-        handler: () => childFromHandler
-      }
+        handler: () => childFromHandler,
+      },
     ]);
 
     const runner = await OpRunner.create(parent, { mode: 'test' });
@@ -632,40 +659,43 @@ describe('Complex Flows', () => {
     expect(states).toContainEqual(['Handler<ChildFromHandler>', 'Grandchild']);
   });
 
-  test('Failure propagation through handlers', async () => {
+  test('Failure propagation through handlers', async () =>
+  {
     let handler1Called = false;
     let handler2Called = false;
 
     const child = new ScriptedOp('Child', [
-      { type: 'fail', failure: 'child error' }
+      { type: 'fail', failure: 'child error' },
     ]);
 
     const nextOp = new ScriptedOp('NextOp', [
-      { type: 'succeed', value: null }
+      { type: 'succeed', value: null },
     ]);
 
     const b = new ScriptedOp('B', [
       {
         type: 'handleOutcome',
         child,
-        handler: (outcome) => {
+        handler: (outcome) =>
+        {
           handler1Called = true;
           expect(outcome.ok).toBe(false);
           return nextOp;
-        }
-      }
+        },
+      },
     ]);
 
     const a = new ScriptedOp('A', [
       {
         type: 'handleOutcome',
         child: b,
-        handler: (outcome) => {
+        handler: (outcome) =>
+        {
           handler2Called = true;
           expect(outcome.ok).toBe(true); // B's handler handled the failure
           return nextOp;
-        }
-      }
+        },
+      },
     ]);
 
     const runner = await OpRunner.create(a, { mode: 'test' });
@@ -675,28 +705,31 @@ describe('Complex Flows', () => {
     expect(handler2Called).toBe(true);
   });
 
-  test('Success value passing through handlers', async () => {
+  test('Success value passing through handlers', async () =>
+  {
     const values: unknown[] = [];
 
     const child = new ScriptedOp('Child', [
-      { type: 'succeed', value: 'original value' }
+      { type: 'succeed', value: 'original value' },
     ]);
 
     const nextOp = new ScriptedOp('NextOp', [
-      { type: 'succeed', value: null }
+      { type: 'succeed', value: null },
     ]);
 
     const parent = new ScriptedOp('Parent', [
       {
         type: 'handleOutcome',
         child,
-        handler: (outcome) => {
-          if (outcome.ok) {
+        handler: (outcome) =>
+        {
+          if (outcome.ok)
+          {
             values.push(outcome.value);
           }
           return nextOp;
-        }
-      }
+        },
+      },
     ]);
 
     const runner = await OpRunner.create(parent, { mode: 'test' });
@@ -710,15 +743,17 @@ describe('Complex Flows', () => {
 // STACK STATE VALIDATION
 // =============================================================================
 
-describe('Stack State Validation', () => {
-  test('Verify handler parent names are correct', async () => {
+describe('Stack State Validation', () =>
+{
+  test('Verify handler parent names are correct', async () =>
+  {
     const child = new ScriptedOp('Child', [
-      { type: 'succeed', value: 'done' }
+      { type: 'succeed', value: 'done' },
     ]);
 
     const parent = new ScriptedOp('ParentOp', [
       { type: 'handleOutcome', child },
-      { type: 'succeed', value: 'done' }
+      { type: 'succeed', value: 'done' },
     ]);
 
     const runner = await OpRunner.create(parent, { mode: 'test' });
@@ -730,14 +765,15 @@ describe('Stack State Validation', () => {
     expect(handlerState).toContain('Handler<ParentOp>');
   });
 
-  test('Verify stack mutations match expected pattern', async () => {
+  test('Verify stack mutations match expected pattern', async () =>
+  {
     const child = new ScriptedOp('Child', [
-      { type: 'succeed', value: 'done' }
+      { type: 'succeed', value: 'done' },
     ]);
 
     const parent = new ScriptedOp('Parent', [
       { type: 'handleOutcome', child },
-      { type: 'succeed', value: 'done' }
+      { type: 'succeed', value: 'done' },
     ]);
 
     const runner = await OpRunner.create(parent, { mode: 'test' });
@@ -746,13 +782,14 @@ describe('Stack State Validation', () => {
     logStackEvolution(states);
 
     // Expected pattern for this scenario
-    expect(states[0]).toEqual(['Parent']);                // Initial
+    expect(states[0]).toEqual(['Parent']); // Initial
     expect(states[1]).toEqual(['Handler<Parent>', 'Child']); // After handleOutcome
-    expect(states[2]).toEqual(['Parent']);                // After handler returns parent
-    expect(states[3]).toEqual([]);                        // Final
+    expect(states[2]).toEqual(['Parent']); // After handler returns parent
+    expect(states[3]).toEqual([]); // Final
   });
 
-  test('Edge case: handler at top of stack (should never happen)', async () => {
+  test('Edge case: handler at top of stack (should never happen)', async () =>
+  {
     // This test verifies the error handling in runStep()
     // We can't easily create this scenario through normal means,
     // but the check exists in the code at line 137-140 of OpRunner.ts
@@ -771,10 +808,12 @@ describe('Stack State Validation', () => {
 // EDGE CASES
 // =============================================================================
 
-describe('Edge Cases', () => {
-  test('Empty stack after completion', async () => {
+describe('Edge Cases', () =>
+{
+  test('Empty stack after completion', async () =>
+  {
     const op = new ScriptedOp('Op', [
-      { type: 'succeed', value: 'done' }
+      { type: 'succeed', value: 'done' },
     ]);
 
     const runner = await OpRunner.create(op, { mode: 'test' });
@@ -784,19 +823,21 @@ describe('Edge Cases', () => {
     expect(runner.getStackDepth()).toBe(0);
   });
 
-  test('Very deep nesting (10+ levels)', async () => {
+  test('Very deep nesting (10+ levels)', async () =>
+  {
     // Build a chain: A → B → C → ... → J (10 levels deep)
     let currentOp = new ScriptedOp('J', [
-      { type: 'succeed', value: 'deepest' }
+      { type: 'succeed', value: 'deepest' },
     ]);
 
     const opNames = ['I', 'H', 'G', 'F', 'E', 'D', 'C', 'B', 'A'];
 
-    for (const name of opNames) {
+    for (const name of opNames)
+    {
       const childOp = currentOp;
       currentOp = new ScriptedOp(name, [
         { type: 'handleOutcome', child: childOp },
-        { type: 'succeed', value: name }
+        { type: 'succeed', value: name },
       ]);
     }
 
@@ -813,4 +854,3 @@ describe('Edge Cases', () => {
     expect(states[states.length - 1]).toEqual([]);
   });
 });
-

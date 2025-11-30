@@ -1,0 +1,8 @@
+{
+  "patterns": ["nomerge"],
+  "caseSensitive": false,
+  "ignore": [
+    ".github/workflows/nomerge.yml"
+  ]
+}
+

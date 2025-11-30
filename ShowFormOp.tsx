@@ -162,11 +162,8 @@ export class ShowFormOp<T extends Record<string, FormItem<any>>> extends Op {
   }
 }
 
-import { parseArgs } from "./main.ts";
 import { main } from "./main.ts";
 if (import.meta.main) {
-  const parsedArgs = parseArgs();
-
   const { Form, FormItem } = await import("./FormPrimitives.ts");
   const { InfoPanel } = await import("./MenuPrimitives.ts");
 
@@ -208,8 +205,7 @@ if (import.meta.main) {
 
   // const contactResult = await contactOp.run();
 
-  console.log(parsedArgs);
-  const contactResult = await main(parsedArgs, contactOp);
+  const contactResult = await main(contactOp);
 
   if (contactResult.ok && contactResult.value.type === "submitted") {
     const values = contactResult.value.values;

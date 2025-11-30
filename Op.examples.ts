@@ -1,6 +1,10 @@
 import type { IOContext } from './IOContext.ts';
 import { Op } from './Op.ts';
-import type { OutcomeOf } from './Outcome.ts';
+import type {
+  FailureOutcomeOf,
+  OutcomeOf,
+  SuccessOutcomeOf,
+} from './Outcome.ts';
 import { PrintOp } from './PrintOp.ts';
 
 // PrintOp has been moved to its own file: PrintOp.ts
@@ -155,9 +159,9 @@ async function _anotherExample()
 export async function match<T extends Op>(
   op: T,
   handlers: {
-    success: (value: Extract<OutcomeOf<T>, { ok: true }>['value']) => void;
+    success: (value: SuccessOutcomeOf<T>['value']) => void;
     failure: (
-      failure: Extract<OutcomeOf<T>, { ok: false }>['failure'],
+      failure: FailureOutcomeOf<T>['failure'],
       debugData?: string,
     ) => void;
   },

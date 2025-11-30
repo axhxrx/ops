@@ -21,10 +21,7 @@ jobs:
         run: bun install
 
       - name: Test (Bun) and check (Bun)
-        run: bun test && bun check 
-
-      - name: delete from orbit node_modules (altho probably not needed)
-        run: rm -rf node_modules
+        run: bun test && bun check
 
       - name: Install dependencies for Deno
         run: deno install
