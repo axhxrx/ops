@@ -11,8 +11,6 @@ jobs:
       - uses: actions/checkout@v4
 
       # Reference the action from the nomerge repo
-      # - uses: axhxrx/nomerge@main  # or use a specific branch
-      # axhxrx/nomerge@claude/cli-stress-tests-011CUp82jyNSWX27T6LMtfzo
-      - uses: axhxrx/nomerge@claude/cli-stress-tests-011CUp82jyNSWX27T6LMtfzo
+      - uses: axhxrx/nomerge@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
