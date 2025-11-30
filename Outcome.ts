@@ -10,6 +10,11 @@ export interface Success<T>
 }
 
 /**
+ Extract the `value` from a `Success` outcome.
+ */
+export type UnwrapSuccess<T> = T extends Success<infer V> ? V : never;
+
+/**
  A failure outcome, whose `failure` property indicates the type of failure.
  */
 export interface Failure<T>
@@ -18,6 +23,8 @@ export interface Failure<T>
   failure: T;
   debugData?: string;
 }
+
+export type UnwrapFailure<T> = T extends Failure<infer F> ? F : never;
 
 /*
  The `Outcome` type represents the outcome of an op. An op is the fundamental unit of work, and it can either succeed, or fail.
@@ -37,6 +44,16 @@ export type Outcome<SuccessT, FailureT> =
  type MyOutcome = OutcomeOf<typeof myOp>
  */
 export type OutcomeOf<T extends Op> = Awaited<ReturnType<T['run']>>;
+
+/**
+ Extract the success branch of an Op's outcome.
+ */
+export type SuccessOutcomeOf<T extends Op> = Extract<OutcomeOf<T>, Success<unknown>>;
+
+/**
+ Extract the failure branch of an Op's outcome.
+ */
+export type FailureOutcomeOf<T extends Op> = Extract<OutcomeOf<T>, Failure<unknown>>;
 
 /**
  Handler function that receives a child Op's outcome and decides what to do next
