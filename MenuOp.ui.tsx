@@ -463,23 +463,10 @@ export const MenuView = <T extends string>({
       )}
 
       {/* Content area (menu items + optional details pane) */}
-      {!showDetailPane ? (
-        // Normal mode - no details pane
-        <Box key='menu-items' flexDirection='column'>
-          {menu.items.map((item, index) => (
-            <MenuItemView
-              key={item.value}
-              item={item}
-              isHighlighted={index === highlightedIndex}
-              helpColumnStart={helpColumnStart}
-            />
-          ))}
-        </Box>
-      ) : (
-        // Split-pane mode
-        <Box key='content-area' flexDirection='row'>
-          {/* Left: Menu items */}
-          <Box flexDirection='column' width={columnWidths.menuPane}>
+      {!showDetailPane
+        ? (
+          // Normal mode - no details pane
+          <Box key='menu-items' flexDirection='column'>
             {menu.items.map((item, index) => (
               <MenuItemView
                 key={item.value}
@@ -489,166 +476,181 @@ export const MenuView = <T extends string>({
               />
             ))}
           </Box>
+        )
+        : (
+          // Split-pane mode
+          <Box key='content-area' flexDirection='row'>
+            {/* Left: Menu items */}
+            <Box flexDirection='column' width={columnWidths.menuPane}>
+              {menu.items.map((item, index) => (
+                <MenuItemView
+                  key={item.value}
+                  item={item}
+                  isHighlighted={index === highlightedIndex}
+                  helpColumnStart={helpColumnStart}
+                />
+              ))}
+            </Box>
 
-          {/* Right: Details pane (separator inside, fills full height) */}
-          <Box
-            flexDirection='column'
-            width={columnWidths.detailsPane}
-            backgroundColor='blackBright'
-            paddingX={1}
-          >
-            {/* TODO: Handle scrolling when info pane is too tall */}
-            {(() =>
-            {
-              // Details pane should fill to match content area height
-              // Content area = entire space from header to footer
-              let contentAreaHeight = terminalHeight;
-              if (header)
+            {/* Right: Details pane (separator inside, fills full height) */}
+            <Box
+              flexDirection='column'
+              width={columnWidths.detailsPane}
+              backgroundColor='blackBright'
+              paddingX={1}
+            >
+              {/* TODO: Handle scrolling when info pane is too tall */}
+              {(() =>
               {
-                contentAreaHeight -= header.resolve().length + 1; // +1 for marginBottom
-              }
-              if (footer)
-              {
-                contentAreaHeight -= footer.resolve().length + 1; // +1 for marginTop
-              }
-              contentAreaHeight -= 1; // Subtract 1 for safety
-
-              const detailsLines = currentDetails ? currentDetails.resolve() : [];
-              const allLines: React.JSX.Element[] = [];
-
-              // Log for debugging
-              // if (typeof logger !== 'undefined' && logger)
-              // {
-              //   logger.log(`Details pane height calculation:`);
-              //   logger.log(`  terminalHeight: ${terminalHeight}`);
-              //   logger.log(`  header lines: ${header ? header.resolve().length : 0}`);
-              //   logger.log(`  footer lines: ${footer ? footer.resolve().length : 0}`);
-              //   logger.log(`  contentAreaHeight: ${contentAreaHeight}`);
-              //   logger.log(`  menu items: ${menu.items.length}`);
-              //   logger.log(`  details lines (unwrapped): ${detailsLines.length}`);
-              // }
-
-              // Helper: Wrap text to fit width
-              const wrapText = (text: string, maxWidth: number): string[] =>
-              {
-                const words = text.split(' ');
-                const lines: string[] = [];
-                let currentLine = '';
-
-                for (const word of words)
+                // Details pane should fill to match content area height
+                // Content area = entire space from header to footer
+                let contentAreaHeight = terminalHeight;
+                if (header)
                 {
-                  const testLine = currentLine ? `${currentLine} ${word}` : word;
-                  if (testLine.length <= maxWidth)
-                  {
-                    currentLine = testLine;
-                  }
-                  else
-                  {
-                    if (currentLine) lines.push(currentLine);
-                    currentLine = word;
-                  }
+                  contentAreaHeight -= header.resolve().length + 1; // +1 for marginBottom
                 }
-                if (currentLine) lines.push(currentLine);
-                return lines.length > 0 ? lines : [''];
-              };
-
-              // Render actual details content with "│ " prefix
-              detailsLines.forEach((line, index) =>
-              {
-                const availableWidth = columnWidths.detailsPane - 4; // Account for paddingX + "│ " prefix
-
-                // Single string - wrap it and render each wrapped line
-                if (typeof line === 'string')
+                if (footer)
                 {
-                  const wrappedLines = wrapText(line, availableWidth);
-                  wrappedLines.forEach((wrappedLine, wrapIndex) =>
+                  contentAreaHeight -= footer.resolve().length + 1; // +1 for marginTop
+                }
+                contentAreaHeight -= 1; // Subtract 1 for safety
+
+                const detailsLines = currentDetails ? currentDetails.resolve() : [];
+                const allLines: React.JSX.Element[] = [];
+
+                // Log for debugging
+                // if (typeof logger !== 'undefined' && logger)
+                // {
+                //   logger.log(`Details pane height calculation:`);
+                //   logger.log(`  terminalHeight: ${terminalHeight}`);
+                //   logger.log(`  header lines: ${header ? header.resolve().length : 0}`);
+                //   logger.log(`  footer lines: ${footer ? footer.resolve().length : 0}`);
+                //   logger.log(`  contentAreaHeight: ${contentAreaHeight}`);
+                //   logger.log(`  menu items: ${menu.items.length}`);
+                //   logger.log(`  details lines (unwrapped): ${detailsLines.length}`);
+                // }
+
+                // Helper: Wrap text to fit width
+                const wrapText = (text: string, maxWidth: number): string[] =>
+                {
+                  const words = text.split(' ');
+                  const lines: string[] = [];
+                  let currentLine = '';
+
+                  for (const word of words)
+                  {
+                    const testLine = currentLine ? `${currentLine} ${word}` : word;
+                    if (testLine.length <= maxWidth)
+                    {
+                      currentLine = testLine;
+                    }
+                    else
+                    {
+                      if (currentLine) lines.push(currentLine);
+                      currentLine = word;
+                    }
+                  }
+                  if (currentLine) lines.push(currentLine);
+                  return lines.length > 0 ? lines : [''];
+                };
+
+                // Render actual details content with "│ " prefix
+                detailsLines.forEach((line, index) =>
+                {
+                  const availableWidth = columnWidths.detailsPane - 4; // Account for paddingX + "│ " prefix
+
+                  // Single string - wrap it and render each wrapped line
+                  if (typeof line === 'string')
+                  {
+                    const wrappedLines = wrapText(line, availableWidth);
+                    wrappedLines.forEach((wrappedLine, wrapIndex) =>
+                    {
+                      allLines.push(
+                        <Box key={`details-line-${index}-${wrapIndex}`}>
+                          <Text dimColor>│</Text>
+                          <Text>{wrappedLine}</Text>
+                        </Box>,
+                      );
+                    });
+                    return;
+                  }
+
+                  // Array - distribute columns (same logic as InfoPanelView)
+                  const columns = line;
+                  if (columns.length === 0) return;
+
+                  if (columns.length === 1)
                   {
                     allLines.push(
-                      <Box key={`details-line-${index}-${wrapIndex}`}>
-                        <Text dimColor>│ </Text>
-                        <Text>{wrappedLine}</Text>
+                      <Box key={`details-line-${index}`}>
+                        <Text dimColor>│</Text>
+                        <Text>{columns[0]}</Text>
                       </Box>,
                     );
-                  });
-                  return;
-                }
+                    return;
+                  }
 
-                // Array - distribute columns (same logic as InfoPanelView)
-                const columns = line;
-                if (columns.length === 0) return;
+                  if (columns.length === 2)
+                  {
+                    const [left, right] = columns;
+                    const leftWidth = left!.length;
+                    const rightWidth = right!.length;
+                    const spacing = Math.max(1, availableWidth - leftWidth - rightWidth);
 
-                if (columns.length === 1)
-                {
+                    allLines.push(
+                      <Box key={`details-line-${index}`}>
+                        <Text dimColor>│</Text>
+                        <Text>{left}</Text>
+                        <Text>{' '.repeat(spacing)}</Text>
+                        <Text>{right}</Text>
+                      </Box>,
+                    );
+                    return;
+                  }
+
+                  // 3+ columns: distribute evenly
+                  const totalContentWidth = columns.reduce((sum, col) => sum + col.length, 0);
+                  const availableSpacing = Math.max(0, availableWidth - totalContentWidth);
+                  const spacingPerGap = Math.floor(availableSpacing / (columns.length - 1));
+
                   allLines.push(
                     <Box key={`details-line-${index}`}>
-                      <Text dimColor>│ </Text>
-                      <Text>{columns[0]}</Text>
+                      <Text dimColor>│</Text>
+                      {columns.map((col, colIndex) => (
+                        <Box key={`details-col-${index}-${colIndex}`}>
+                          <Text>{col}</Text>
+                          {colIndex < columns.length - 1 && <Text>{' '.repeat(spacingPerGap)}</Text>}
+                        </Box>
+                      ))}
                     </Box>,
                   );
-                  return;
-                }
+                });
 
-                if (columns.length === 2)
+                // Fill remaining lines with "│ " to reach contentAreaHeight
+                // Use allLines.length (actual rendered lines) not detailsLines.length (unwrapped lines)
+                const remainingLines = Math.max(0, contentAreaHeight - allLines.length);
+
+                // Log remaining lines calculation
+                // if (typeof logger !== 'undefined' && logger)
+                // {
+                //   logger.log(`  wrapped lines rendered: ${allLines.length}`);
+                //   logger.log(`  remaining filler lines: ${remainingLines}`);
+                // }
+
+                for (let i = 0; i < remainingLines; i++)
                 {
-                  const [left, right] = columns;
-                  const leftWidth = left!.length;
-                  const rightWidth = right!.length;
-                  const spacing = Math.max(1, availableWidth - leftWidth - rightWidth);
-
                   allLines.push(
-                    <Box key={`details-line-${index}`}>
-                      <Text dimColor>│ </Text>
-                      <Text>{left}</Text>
-                      <Text>{' '.repeat(spacing)}</Text>
-                      <Text>{right}</Text>
+                    <Box key={`details-empty-${i}`}>
+                      <Text dimColor>│</Text>
                     </Box>,
                   );
-                  return;
                 }
 
-                // 3+ columns: distribute evenly
-                const totalContentWidth = columns.reduce((sum, col) => sum + col.length, 0);
-                const availableSpacing = Math.max(0, availableWidth - totalContentWidth);
-                const spacingPerGap = Math.floor(availableSpacing / (columns.length - 1));
-
-                allLines.push(
-                  <Box key={`details-line-${index}`}>
-                    <Text dimColor>│ </Text>
-                    {columns.map((col, colIndex) => (
-                      <Box key={`details-col-${index}-${colIndex}`}>
-                        <Text>{col}</Text>
-                        {colIndex < columns.length - 1 && <Text>{' '.repeat(spacingPerGap)}</Text>}
-                      </Box>
-                    ))}
-                  </Box>,
-                );
-              });
-
-              // Fill remaining lines with "│ " to reach contentAreaHeight
-              // Use allLines.length (actual rendered lines) not detailsLines.length (unwrapped lines)
-              const remainingLines = Math.max(0, contentAreaHeight - allLines.length);
-
-              // Log remaining lines calculation
-              // if (typeof logger !== 'undefined' && logger)
-              // {
-              //   logger.log(`  wrapped lines rendered: ${allLines.length}`);
-              //   logger.log(`  remaining filler lines: ${remainingLines}`);
-              // }
-
-              for (let i = 0; i < remainingLines; i++)
-              {
-                allLines.push(
-                  <Box key={`details-empty-${i}`}>
-                    <Text dimColor>│ </Text>
-                  </Box>,
-                );
-              }
-
-              return <>{allLines}</>;
-            })()}
+                return <>{allLines}</>;
+              })()}
+            </Box>
           </Box>
-        </Box>
-      )}
+        )}
 
       {/* Spacer to push footer to bottom (not needed in split mode - details pane fills height) */}
       {!showDetailPane && spacerHeight > 0 && <Box key='spacer-bottom' height={spacerHeight} />}

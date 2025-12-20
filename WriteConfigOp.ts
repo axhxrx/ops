@@ -192,8 +192,8 @@ export class WriteConfigOp<T = unknown> extends Op
    * @param source - The plain object with new values
    */
   private recursivelyUpdateProperties(
-    target: any,  // eslint-disable-line @typescript-eslint/no-explicit-any
-    source: Record<string, unknown>
+    target: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+    source: Record<string, unknown>,
   ): void
   {
     // NOTE: This function intentionally works with 'any' (the dynamic proxy from JSONCTCObject.data)
@@ -201,10 +201,10 @@ export class WriteConfigOp<T = unknown> extends Op
 
     // Helper to check if value is a plain object (not array, not null)
     const isPlainObject = (val: unknown): val is Record<string, unknown> =>
-      val !== null &&
-      typeof val === 'object' &&
-      !Array.isArray(val) &&
-      val.constructor === Object;
+      val !== null
+      && typeof val === 'object'
+      && !Array.isArray(val)
+      && val.constructor === Object;
 
     // Get keys from both target and source
     const sourceKeys = Object.keys(source);

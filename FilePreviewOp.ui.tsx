@@ -90,20 +90,20 @@ export const FilePreview = ({
   }
 
   return (
-    <Box flexDirection="column">
+    <Box flexDirection='column'>
       <Box marginBottom={1}>
-        <Text bold color="cyan">
+        <Text bold color='cyan'>
           📄 File: {filePath}
         </Text>
       </Box>
 
       {error && (
         <Box marginBottom={1}>
-          <Text color="yellow">⚠️  {error}</Text>
+          <Text color='yellow'>⚠️ {error}</Text>
         </Box>
       )}
 
-      <Box flexDirection="column">
+      <Box flexDirection='column'>
         <Text>{formattedContent}</Text>
       </Box>
 

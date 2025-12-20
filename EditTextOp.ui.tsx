@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
 import { Box, Text, useInput, useStdout } from 'ink';
+import { useEffect, useState } from 'react';
 import type { Logger } from './Logger.ts';
 
 /**
@@ -435,9 +435,9 @@ export const EditTextInput = ({
   if (stdout && (terminalWidth < MIN_WIDTH || terminalHeight < MIN_HEIGHT))
   {
     return (
-      <Box flexDirection="column" alignItems="center" justifyContent="center">
-        <Text bold color="red">
-          ⚠️  TERMINAL TOO SMALL
+      <Box flexDirection='column' alignItems='center' justifyContent='center'>
+        <Text bold color='red'>
+          ⚠️ TERMINAL TOO SMALL
         </Text>
         <Text dimColor>
           Minimum: {MIN_WIDTH}x{MIN_HEIGHT} | Current: {terminalWidth}x{terminalHeight}
@@ -450,7 +450,7 @@ export const EditTextInput = ({
   }
 
   return (
-    <Box flexDirection="column">
+    <Box flexDirection='column'>
       {/* Prompt */}
       {prompt && (
         <Box marginBottom={1}>
@@ -466,7 +466,7 @@ export const EditTextInput = ({
       )}
 
       {/* Editor content */}
-      <Box flexDirection="column">
+      <Box flexDirection='column'>
         {visibleLines.map((line, index) => renderLine(line, index))}
       </Box>
 
@@ -480,7 +480,7 @@ export const EditTextInput = ({
       {/* Error message */}
       {error && (
         <Box marginTop={1}>
-          <Text color="red">❌ {error}</Text>
+          <Text color='red'>❌ {error}</Text>
         </Box>
       )}
 

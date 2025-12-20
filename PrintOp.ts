@@ -125,7 +125,9 @@ if (import.meta.main)
 
   // Test 4: Long text with no limit (new default behavior)
   console.log('\nTest 4: Long text with no limit');
-  const longHelpText = 'This is a really long help text that would have failed before, but now PrintOp has no default length limit! '.repeat(3);
+  const longHelpText =
+    'This is a really long help text that would have failed before, but now PrintOp has no default length limit! '
+      .repeat(3);
   const outcome4 = await PrintOp.run(longHelpText + '\n');
 
   // Verify results

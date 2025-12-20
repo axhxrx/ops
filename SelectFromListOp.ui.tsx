@@ -1,6 +1,6 @@
-import { useState } from 'react';
 import { Box, Text, useInput } from 'ink';
 import InkSelectInput from 'ink-select-input';
+import { useState } from 'react';
 import type { Logger } from './Logger.ts';
 import type { SelectOption } from './SelectFromListOp.tsx';
 
@@ -257,20 +257,16 @@ export const SelectInput = <T extends SelectOption>({
     const paddingLines = maxHelpTextLines - currentLines.length;
 
     return (
-      <Box flexDirection="column" marginTop={1}>
-        {currentHelpText && (
-          <Text dimColor>{currentHelpText}</Text>
-        )}
+      <Box flexDirection='column' marginTop={1}>
+        {currentHelpText && <Text dimColor>{currentHelpText}</Text>}
         {/* Add empty lines to maintain fixed height */}
-        {Array.from({ length: paddingLines }).map((_, i) => (
-          <Text key={`padding-${i}`}>{' '}</Text>
-        ))}
+        {Array.from({ length: paddingLines }).map((_, i) => <Text key={`padding-${i}`}>{' '}</Text>)}
       </Box>
     );
   };
 
   return (
-    <Box flexDirection="column">
+    <Box flexDirection='column'>
       <InkSelectInput
         items={items}
         onSelect={handleSelect}

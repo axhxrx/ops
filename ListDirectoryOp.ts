@@ -1,12 +1,12 @@
 #!/usr/bin/env bun
 
-import { stat, readdir } from 'node:fs/promises';
-import { join } from 'node:path';
 import type { Stats } from 'node:fs';
+import { readdir, stat } from 'node:fs/promises';
+import { join } from 'node:path';
+import { DirectoryListing } from './DirectoryListing.ts';
 import type { IOContext } from './IOContext.ts';
 import { Op } from './Op.ts';
 import type { FileSystemEntry, FileSystemEntryType } from './SelectFromFilesystemOp.ts';
-import { DirectoryListing } from './DirectoryListing.ts';
 
 /**
  * Options for ListDirectoryOp

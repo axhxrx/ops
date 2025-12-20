@@ -205,7 +205,8 @@ export class S3ListOp extends Op
           return this.fail('bucketNotFound' as const, this.credentials.bucket);
         }
 
-        if (errorMessage.includes('network') || errorMessage.includes('ENOTFOUND') || errorMessage.includes('ECONNREFUSED'))
+        if (errorMessage.includes('network') || errorMessage.includes('ENOTFOUND')
+          || errorMessage.includes('ECONNREFUSED'))
         {
           return this.fail('networkError' as const, errorMessage);
         }

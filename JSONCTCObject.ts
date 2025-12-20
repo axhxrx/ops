@@ -1,4 +1,5 @@
-import { applyEdits, type FormattingOptions, modify as originalModify, parse, parseTree, findNodeAtLocation } from 'jsonc-parser';
+import { applyEdits, findNodeAtLocation, type FormattingOptions, modify as originalModify, parse,
+  parseTree } from 'jsonc-parser';
 
 /**
  * HALL-OF-FAMER RADGUY O.G. WAREZ KINGPIN MONKEYPATCH!
@@ -17,14 +18,14 @@ function modify(
   text: string,
   path: (string | number)[],
   value: unknown,
-  options?: { formattingOptions?: FormattingOptions; getInsertionIndex?: () => number; isArrayInsertion?: boolean }
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Intentional: returns jsonc-parser edit objects (array of any)
+  options?: { formattingOptions?: FormattingOptions; getInsertionIndex?: () => number; isArrayInsertion?: boolean },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Intentional: returns jsonc-parser edit objects (array of any)
 ): any[]
 {
   // Check if path contains array indices (numbers OR numeric strings!)
   const hasArrayIndex = path.some(segment =>
-    typeof segment === 'number' ||
-    (typeof segment === 'string' && !isNaN(Number(segment)))
+    typeof segment === 'number'
+    || (typeof segment === 'string' && !isNaN(Number(segment)))
   );
 
   if (!hasArrayIndex)
@@ -156,7 +157,7 @@ function modify(
   return [{
     offset: elementNode.offset,
     length: elementNode.length,
-    content: newValue
+    content: newValue,
   }];
 }
 
@@ -188,9 +189,9 @@ export class JSONCTCObject
 {
   private originalText: string | null;
   private parsedData: unknown;
-  private path: string[];                        // Position in tree: [] for root, ['settings'] for nested
-  private children = new Map<string, JSONCTCObject>();  // Nested objects as JSONCTCObjects!
-  private changes = new Map<string, unknown>();         // ONLY primitives (objects go in children)
+  private path: string[]; // Position in tree: [] for root, ['settings'] for nested
+  private children = new Map<string, JSONCTCObject>(); // Nested objects as JSONCTCObjects!
+  private changes = new Map<string, unknown>(); // ONLY primitives (objects go in children)
   private deletions = new Set<string>();
   private dataProxy: unknown;
 
@@ -244,8 +245,8 @@ export class JSONCTCObject
         this.children.set(key, new JSONCTCObject(
           // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- Intentional: wrapping unknown nested object
           value,
-          this.originalText,  // Share the same root text!
-          [...this.path, key]  // Extend the path
+          this.originalText, // Share the same root text!
+          [...this.path, key], // Extend the path
         ));
       }
     }
@@ -609,10 +610,10 @@ export class JSONCTCObject
   private isPlainObject(val: unknown): val is Record<string, unknown>
   {
     return (
-      val !== null &&
-      typeof val === 'object' &&
-      !Array.isArray(val) &&
-      val.constructor === Object
+      val !== null
+      && typeof val === 'object'
+      && !Array.isArray(val)
+      && val.constructor === Object
     );
   }
 

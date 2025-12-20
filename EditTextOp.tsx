@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 
-import { spawn } from 'node:child_process';
 import { render } from 'ink';
+import { spawn } from 'node:child_process';
 import { readFile, unlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';

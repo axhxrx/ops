@@ -1,11 +1,11 @@
 #!/usr/bin/env bun
 
-import type { IOContext } from './IOContext.ts';
 import { BrowserOpBase } from './BrowserOpBase.ts';
-import { S3ListOp } from './S3ListOp.ts';
+import type { IOContext } from './IOContext.ts';
 import { S3CredentialsOp } from './S3CredentialsOp.ts';
+import { S3ListOp } from './S3ListOp.ts';
 import { S3Listing } from './S3Types.ts';
-import type { S3Entry, S3Credentials } from './S3Types.ts';
+import type { S3Credentials, S3Entry } from './S3Types.ts';
 
 /**
  * Selection mode for S3 browser
@@ -323,7 +323,8 @@ if (import.meta.main)
   }
 
   // Track results for final summary
-  const demo1Result: { type: 'file' | 'dir' | 'files'; name?: string; key?: string; size?: number; count?: number; canceled?: boolean } = { type: 'file' };
+  const demo1Result: { type: 'file' | 'dir' | 'files'; name?: string; key?: string; size?: number; count?: number;
+    canceled?: boolean } = { type: 'file' };
 
   console.log(`☁️  S3BrowserOp Demo - Browsing bucket: ${bucket}\n`);
 

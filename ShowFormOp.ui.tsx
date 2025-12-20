@@ -119,7 +119,10 @@ const renderInfoPanel = (panel: InfoPanel | undefined, terminalWidth: number): R
             <Box key={idx}>
               {line.map((col, colIdx) => (
                 <Box key={colIdx} width={columnWidth}>
-                  <Text>{padToWidth(col, columnWidth, colIdx === 0 ? 'left' : colIdx === line.length - 1 ? 'right' : 'center')}</Text>
+                  <Text>
+                    {padToWidth(col, columnWidth,
+                      colIdx === 0 ? 'left' : colIdx === line.length - 1 ? 'right' : 'center')}
+                  </Text>
                 </Box>
               ))}
             </Box>

@@ -3,11 +3,11 @@
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import { getConfigNamespace, sanitizeKey, sanitizeNamespace } from './ConfigContext.ts';
 import type { IOContext } from './IOContext.ts';
+import { JSONCTCParseOp } from './JSONCTCParseOp.ts';
 import { Op } from './Op.ts';
 import type { Failure, Success } from './Outcome.ts';
-import { getConfigNamespace, sanitizeKey, sanitizeNamespace } from './ConfigContext.ts';
-import { JSONCTCParseOp } from './JSONCTCParseOp.ts';
 
 /**
  Options for reading config

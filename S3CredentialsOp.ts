@@ -1,8 +1,8 @@
 #!/usr/bin/env bun
 
+import { InputTextOp } from './InputTextOp.tsx';
 import type { IOContext } from './IOContext.ts';
 import { Op } from './Op.ts';
-import { InputTextOp } from './InputTextOp.tsx';
 import type { S3Credentials } from './S3Types.ts';
 
 /**

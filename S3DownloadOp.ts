@@ -2,11 +2,11 @@
 
 import { S3Client } from 'bun';
 import { access, mkdir, writeFile } from 'node:fs/promises';
-import { join, dirname } from 'node:path';
+import { dirname, join } from 'node:path';
 import type { IOContext } from './IOContext.ts';
 import { Op } from './Op.ts';
-import type { S3Credentials } from './S3Types.ts';
 import { S3ListOp } from './S3ListOp.ts';
+import type { S3Credentials } from './S3Types.ts';
 
 /**
  * Options for S3DownloadOp

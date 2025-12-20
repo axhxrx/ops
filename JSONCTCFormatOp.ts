@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 
-import { readFile } from 'node:fs/promises';
 import { applyEdits, format, type FormattingOptions } from 'jsonc-parser';
+import { readFile } from 'node:fs/promises';
 import type { IOContext } from './IOContext.ts';
 import { Op } from './Op.ts';
 import type { Failure, Success } from './Outcome.ts';

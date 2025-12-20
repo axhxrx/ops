@@ -27,7 +27,7 @@ console.log('  ↑↓: Move up/down (watch the viewport scroll!)');
 console.log('  h: Jump to first row');
 console.log('  e: Jump to last row');
 console.log('  PgUp/PgDn: Jump by page');
-console.log('  Look for ▲ and ▼ indicators when there\'s more content\n');
+console.log("  Look for ▲ and ▼ indicators when there's more content\n");
 console.log('---\n');
 
 // Generate 100 rows of test data
@@ -83,4 +83,4 @@ console.log('\n🎉 Scrolling test complete!\n');
 console.log('Tips:');
 console.log('  - Try resizing your terminal while running this');
 console.log('  - The viewport should adapt to your terminal size');
-console.log('  - If terminal is too small, you\'ll see a warning message');
+console.log("  - If terminal is too small, you'll see a warning message");

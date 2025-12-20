@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 
-import { readFile } from 'node:fs/promises';
 import { parse, type ParseError, type ParseOptions } from 'jsonc-parser';
+import { readFile } from 'node:fs/promises';
 import type { IOContext } from './IOContext.ts';
 import { Op } from './Op.ts';
 import type { Failure, Success } from './Outcome.ts';
@@ -93,9 +93,7 @@ export class JSONCTCParseOp<T = unknown> extends Op
 
       if (errors.length > 0)
       {
-        const errorMessages = errors.map(e =>
-          `Line ${e.offset}: ${this.formatError(e)}`
-        ).join('; ');
+        const errorMessages = errors.map(e => `Line ${e.offset}: ${this.formatError(e)}`).join('; ');
         return this.fail('parseError' as const, errorMessages);
       }
 

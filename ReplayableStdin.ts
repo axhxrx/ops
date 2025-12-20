@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { Buffer } from 'node:buffer';
 import { EventEmitter } from 'node:events';
 import { readFile } from 'node:fs/promises';
 import type { InputEvent, Session } from './RecordableStdin.ts';
-import { Buffer } from "node:buffer";
 /**
  ReplayableStdin - Replays recorded user input, then switches to interactive mode once session replay finishes.
 
@@ -102,8 +102,14 @@ export class ReplayableStdin extends EventEmitter
       }
 
       // Buffer the data and emit 'readable' (Ink uses 'readable' not 'data')
-      if (ReplayableStdin.DEBUG) console.log(`[ReplayableStdin] ⚡ Event ${this.index + 1}/${this.queue.length}: ${JSON.stringify(event.data)}`);
-      if (ReplayableStdin.DEBUG) console.log(`[ReplayableStdin] 🔍 'readable' listener count: ${this.listenerCount('readable')}`);
+      if (ReplayableStdin.DEBUG)
+      {
+        console.log(`[ReplayableStdin] ⚡ Event ${this.index + 1}/${this.queue.length}: ${JSON.stringify(event.data)}`);
+      }
+      if (ReplayableStdin.DEBUG)
+      {
+        console.log(`[ReplayableStdin] 🔍 'readable' listener count: ${this.listenerCount('readable')}`);
+      }
 
       const buffer = Buffer.from(event.data);
       this.readBuffer.push(buffer);
@@ -196,7 +202,10 @@ export class ReplayableStdin extends EventEmitter
     if (this.isReplaying && this.readBuffer.length > 0)
     {
       const buffer = this.readBuffer.shift();
-      if (ReplayableStdin.DEBUG) console.log(`[ReplayableStdin] 📖 read() called, returning: ${JSON.stringify(buffer?.toString())}`);
+      if (ReplayableStdin.DEBUG)
+      {
+        console.log(`[ReplayableStdin] 📖 read() called, returning: ${JSON.stringify(buffer?.toString())}`);
+      }
       return buffer;
     }
 

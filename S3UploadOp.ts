@@ -1,8 +1,8 @@
 #!/usr/bin/env bun
 
 import { S3Client } from 'bun';
-import { stat, readdir } from 'node:fs/promises';
-import { join, relative, basename } from 'node:path';
+import { readdir, stat } from 'node:fs/promises';
+import { basename, join, relative } from 'node:path';
 import type { IOContext } from './IOContext.ts';
 import { Op } from './Op.ts';
 import type { S3Credentials } from './S3Types.ts';
