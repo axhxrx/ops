@@ -23,6 +23,12 @@ export { SelectFromListOp } from './SelectFromListOp.tsx';
 export { ShowTableOp } from './ShowTableOp.tsx';
 export type { ShowTableOpOptions, TableColumn, TableData, TableDataProvider, TableMode,
   TableRow } from './ShowTableOp.tsx';
+export type { CustomKeyHandler } from './ShowTableOp.ui.tsx';
+
+export { ShowFormOp } from './ShowFormOp.tsx';
+export type { ShowFormOpOptions, ShowFormOpSuccess, ShowFormOpFailure } from './ShowFormOp.tsx';
+export { Form, FormItem } from './FormPrimitives.ts';
+export type { FieldType, Validator } from './FormPrimitives.ts';
 
 // Record/replay support
 export { parseOpRunnerArgs } from './args.ts';

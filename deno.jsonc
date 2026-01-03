@@ -6,7 +6,7 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "jsxImportSource": "react",
-    "lib": ["ESNext", "DOM"],
+    "lib": ["ESNext", "DOM", "deno.ns"],
     "types": ["node", "bun-types"]
   },
   "imports": {
