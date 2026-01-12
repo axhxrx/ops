@@ -2,6 +2,7 @@
 
 import chalk from 'chalk';
 import { render } from 'ink';
+import process from 'node:process';
 import type { IOContext } from './IOContext.ts';
 import { MenuView } from './MenuOp.ui.tsx';
 import type { Menu } from './MenuPrimitives.ts';
@@ -106,7 +107,7 @@ export class MenuOp<T extends string> extends Op
 
 if (import.meta.main)
 {
-  const { Menu, MenuItem, InfoPanel } = await import('./MenuPrimitives');
+  const { Menu, MenuItem, InfoPanel } = await import('./MenuPrimitives.ts');
 
   // Parse args: `./MenuOp.tsx last` or `./MenuOp.tsx 3` or `./MenuOp.tsx 1 2 4`
   const args = process.argv.slice(2);

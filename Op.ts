@@ -146,9 +146,11 @@ export abstract class Op
   }
 
   /**
-   Helper to create a failure outcome. **Note:** don't forget to use `as const` to preserve literal type of `failure` or you will lose strong exhaustive typing of the possible failures. This helper is what makes the type inference work.
+   Helper to create a failure outcome.
 
-   Use 'as const' to preserve literal types!
+   UPDATE: @masonmark 2026-01-11: If your `run()` method has an explicit return type (e.g., `Promise<Success<T> | Failure<MyFailureType>>`), then `as const` is unnecessary — TypeScript uses contextual typing to infer the correct literal type. Only use `as const` if you're relying on inferred return types (not recommended).
+
+   Original note (for inferred return types): don't forget to use `as const` to preserve literal type of `failure` or you will lose strong exhaustive typing of the possible failures.
    */
   fail<F>(failure: F, debugData?: string): Failure<F>
   {

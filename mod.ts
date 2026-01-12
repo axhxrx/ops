@@ -25,10 +25,10 @@ export type { ShowTableOpOptions, TableColumn, TableData, TableDataProvider, Tab
   TableRow } from './ShowTableOp.tsx';
 export type { CustomKeyHandler } from './ShowTableOp.ui.tsx';
 
-export { ShowFormOp } from './ShowFormOp.tsx';
-export type { ShowFormOpOptions, ShowFormOpSuccess, ShowFormOpFailure } from './ShowFormOp.tsx';
 export { Form, FormItem } from './FormPrimitives.ts';
 export type { FieldType, Validator } from './FormPrimitives.ts';
+export { ShowFormOp } from './ShowFormOp.tsx';
+export type { ShowFormOpFailure, ShowFormOpOptions, ShowFormOpSuccess } from './ShowFormOp.tsx';
 
 // Record/replay support
 export { parseOpRunnerArgs } from './args.ts';
@@ -39,6 +39,10 @@ export { ReplayableStdin } from './ReplayableStdin.ts';
 
 // Export main function — it's reusable
 export * from './main.ts';
+
+// New init() API for apps that want to parse their own args
+export { init } from './init.ts';
+export type { InitResult } from './init.ts';
 
 if (import.meta.main)
 {

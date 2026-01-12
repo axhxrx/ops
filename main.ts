@@ -1,15 +1,23 @@
 import process from 'node:process';
-import { type OpRunnerArgs, parseOpRunnerArgs } from './args.ts';
+import { parseOpRunnerArgs } from './args.ts';
 import { WelcomeOp } from './GameOps.ts';
 import { Op } from './Op.ts';
 import { OpRunner } from './OpRunner.ts';
 import type { OutcomeOf } from './Outcome.ts';
 
-export type MainArgs = {
-  opRunner: OpRunnerArgs;
-  app: Record<string, string>;
-};
+/**
+ Simple main function for apps that don't need custom arg parsing.
 
+ For more control over arg parsing, use `init()` instead.
+
+ @example
+ ```typescript
+ import { main } from '@axhxrx/ops';
+ import { MyRootOp } from './MyRootOp.ts';
+
+ await main(new MyRootOp());
+ ```
+ */
 export async function main<T extends Op>(
   getInitialOp: T | ((args: string[]) => T),
 ): Promise<OutcomeOf<T>>
@@ -27,30 +35,6 @@ export async function main<T extends Op>(
 
   // We are counting on OpRunner to ensure the final result is of type OutcomeOf<T>
   return finalResult as OutcomeOf<T>;
-}
-
-/**
- Parse OpRunner-specific args and return remaining args for app-specific parsing
- */
-export function parseArgs(): MainArgs
-{
-  // Parse framework args first
-  const { opRunner, remaining } = parseOpRunnerArgs(process.argv.slice(2));
-
-  // Parse app-specific args from remaining
-  const app = parseAppArgs(remaining);
-
-  return { opRunner, app };
-}
-
-/**
- For now, no app-specific args but there will be later
- */
-export function parseAppArgs(_args: string[]): Record<string, string>
-{
-  // For now, no app-specific args
-  // Apps using this lib can extend this to parse their own args
-  return {};
 }
 
 if (import.meta.main)

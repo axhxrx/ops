@@ -1,9 +1,9 @@
 #!/usr/bin/env bun
 
-import { render } from 'ink';
-import type { IOContext } from './IOContext.ts';
-import { Op } from './Op.ts';
-import { SelectInput } from './SelectFromListOp.ui.tsx';
+import { render } from "ink";
+import type { IOContext } from "./IOContext.ts";
+import { Op } from "./Op.ts";
+import { SelectInput } from "./SelectFromListOp.ui.tsx";
 
 /**
  Simple string option (backward compatible)
@@ -111,64 +111,64 @@ export type SelectFromListOpOptions = {
  }
  ```
  */
-export class SelectFromListOp<OptionsT extends readonly SelectOption[]> extends Op
-{
-  name = 'SelectFromListOp';
+export class SelectFromListOp<
+  OptionsT extends readonly SelectOption[]
+> extends Op {
+  name = "SelectFromListOp";
 
   constructor(
     private options: OptionsT,
-    private config: SelectFromListOpOptions = {},
-  )
-  {
+    private config: SelectFromListOpOptions = {}
+  ) {
     super();
   }
 
-  async run(io?: IOContext)
-  {
+  async run(io?: IOContext) {
     await Promise.resolve();
-    type SuccessT = typeof this.options[number];
+    type SuccessT = (typeof this.options)[number];
     const ioContext = this.getIO(io);
 
-    let answer: SuccessT | 'canceled' | null = null;
+    let answer: SuccessT | "canceled" | null = null;
 
     const { unmount, waitUntilExit } = render(
       <SelectInput
         options={this.options}
-        logger={ioContext.logger}
-        onSelect={(value) =>
-        {
-          const displayValue = typeof value === 'string' ? value : value.title;
-          this.log(io, `Selected: ${displayValue}`);
+        // logger={ioContext.logger}
+        onSelect={(value) => {
+          const displayValue = typeof value === "string" ? value : value.title;
           answer = value as SuccessT;
           unmount();
+          // Log AFTER unmount, else log will be ABOVE menu.
+          this.log(io, "");
+          this.log(io, `→ ${displayValue}`); // FIXME: make this optional.
+          this.log(io, "");
         }}
-        onCancel={this.config.cancelable
-          ? () =>
-          {
-            this.log(io, 'Canceled');
-            answer = 'canceled';
-            unmount();
-          }
-          : undefined}
+        onCancel={
+          this.config.cancelable
+            ? () => {
+                this.log(io, "Canceled");
+                answer = "canceled";
+                unmount();
+              }
+            : undefined
+        }
         onKeystroke={this.config.onKeystroke}
       />,
       {
         stdin: ioContext.stdin as NodeJS.ReadStream,
         stdout: ioContext.stdout as NodeJS.WriteStream,
-      },
+      }
     );
 
     await waitUntilExit();
 
     // Handle the three possible outcomes
-    if (answer === 'canceled')
-    {
+    if (answer === "canceled") {
       return this.cancel();
     }
 
-    if (answer === null)
-    {
-      return this.failWithUnknownError('No selection made');
+    if (answer === null) {
+      return this.failWithUnknownError("No selection made");
     }
 
     // TypeScript doen't knows answer is SuccessT here, because it can't track values through callbacks. :-/
@@ -176,127 +176,134 @@ export class SelectFromListOp<OptionsT extends readonly SelectOption[]> extends 
   }
 }
 
-if (import.meta.main)
-{
+if (import.meta.main) {
   // Example 1: Simple string options (backward compatible)
-  console.log('Example 1: Simple string options\n');
-  const simpleOptions = ['Start game', 'Load saved game', 'Settings', 'Exit'] as const;
+  console.log("Example 1: Simple string options\n");
+  const simpleOptions = [
+    "Start game",
+    "Load saved game",
+    "Settings",
+    "Exit",
+  ] as const;
   const op1 = new SelectFromListOp(simpleOptions, { cancelable: true });
   const outcome1 = await op1.run();
 
-  if (outcome1.ok)
-  {
-    console.log('✅ Selected:', outcome1.value);
-  }
-  else if (outcome1.failure === 'canceled')
-  {
-    console.log('🚫 Canceled');
-  }
-  else
-  {
-    console.log('❓ Unknown error:', outcome1.debugData);
+  if (outcome1.ok) {
+    console.log("✅ Selected:", outcome1.value);
+  } else if (outcome1.failure === "canceled") {
+    console.log("🚫 Canceled");
+  } else {
+    console.log("❓ Unknown error:", outcome1.debugData);
   }
 
-  console.log('\n---\n');
+  console.log("\n---\n");
 
   // Example 2: Rich options with keyboard shortcuts and help text
-  console.log('Example 2: Rich options with keyboard shortcuts and help text');
-  console.log('Navigate with arrows to see help text change. Press A, D, S, or Q to select!\n');
+  console.log("Example 2: Rich options with keyboard shortcuts and help text");
+  console.log(
+    "Navigate with arrows to see help text change. Press A, D, S, or Q to select!\n"
+  );
   const richOptions = [
     {
-      title: '[A]ctivate feature',
-      key: 'a',
-      helpText: 'Choosing this option cannot be undone, and may cause you to lose money.\nProceed with caution!',
+      title: "[A]ctivate feature",
+      key: "a",
+      helpText:
+        "Choosing this option cannot be undone, and may cause you to lose money.\nProceed with caution!",
     },
     {
-      title: '[D]isable feature',
-      key: 'd',
-      helpText: 'This will temporarily disable the feature. You can re-enable it later.',
+      title: "[D]isable feature",
+      key: "d",
+      helpText:
+        "This will temporarily disable the feature. You can re-enable it later.",
     },
     {
-      title: '[S]how status',
-      key: 's',
-      helpText: 'Display the current status of all features without making any changes.',
+      title: "[S]how status",
+      key: "s",
+      helpText:
+        "Display the current status of all features without making any changes.",
     },
     {
-      title: '[Q]uit',
-      key: 'q',
-      helpText: 'Exit the program immediately.',
+      title: "[Q]uit",
+      key: "q",
+      helpText: "Exit the program immediately.",
     },
   ] as const;
   const op2 = new SelectFromListOp(richOptions);
   const outcome2 = await op2.run();
 
-  if (outcome2.ok)
-  {
+  if (outcome2.ok) {
     const selected = outcome2.value;
-    const display = typeof selected === 'string' ? selected : (selected as RichOption<unknown>).title;
-    console.log('✅ Selected:', display);
-  }
-  else if (outcome2.failure === 'canceled')
-  {
-    console.log('🚫 Canceled');
-  }
-  else
-  {
-    console.log('❓ Unknown error:', outcome2.debugData);
+    const display =
+      typeof selected === "string"
+        ? selected
+        : (selected as RichOption<unknown>).title;
+    console.log("✅ Selected:", display);
+  } else if (outcome2.failure === "canceled") {
+    console.log("🚫 Canceled");
+  } else {
+    console.log("❓ Unknown error:", outcome2.debugData);
   }
 
-  console.log('\n---\n');
+  console.log("\n---\n");
 
   // Example 3: Mixed help text (some options have help, some don't)
-  console.log('Example 3: Mixed help text and case-sensitive shortcuts');
-  console.log('Notice how the help area maintains fixed height even when some options lack help text!\n');
+  console.log("Example 3: Mixed help text and case-sensitive shortcuts");
+  console.log(
+    "Notice how the help area maintains fixed height even when some options lack help text!\n"
+  );
   const caseSensitiveOptions = [
     {
-      title: '[I]mportant (case-sensitive)',
-      key: 'I',
+      title: "[I]mportant (case-sensitive)",
+      key: "I",
       caseSensitive: true,
       helpText: 'Only uppercase "I" will select this option (case-sensitive).',
     },
     {
-      title: '[V]iew logs',
-      key: 'v',
+      title: "[V]iew logs",
+      key: "v",
       // No help text for this option - the help area will show empty space
     },
     {
-      title: '[E]xit',
-      key: 'e',
+      title: "[E]xit",
+      key: "e",
       helpText: 'Both "e" and "E" will work (case-insensitive by default).',
     },
   ] as const;
   const op3 = new SelectFromListOp(caseSensitiveOptions);
   const outcome3 = await op3.run();
 
-  if (outcome3.ok)
-  {
+  if (outcome3.ok) {
     const selected = outcome3.value;
-    const display = typeof selected === 'string' ? selected : (selected as RichOption<unknown>).title;
-    console.log('✅ Selected:', display);
-  }
-  else
-  {
-    console.log('❓ Unknown error:', outcome3.debugData);
+    const display =
+      typeof selected === "string"
+        ? selected
+        : (selected as RichOption<unknown>).title;
+    console.log("✅ Selected:", display);
+  } else {
+    console.log("❓ Unknown error:", outcome3.debugData);
   }
 
-  console.log('\n---\n');
+  console.log("\n---\n");
 
   // Example 4: Using onKeystroke handler for custom key handling
-  console.log('Example 4: Custom keystroke handler');
-  console.log('Try pressing a number key (1-3) - custom handler will log it!\n');
-  const optionsWithHandler = ['First option', 'Second option', 'Third option'] as const;
+  console.log("Example 4: Custom keystroke handler");
+  console.log(
+    "Try pressing a number key (1-3) - custom handler will log it!\n"
+  );
+  const optionsWithHandler = [
+    "First option",
+    "Second option",
+    "Third option",
+  ] as const;
   const op4 = new SelectFromListOp(optionsWithHandler, {
     cancelable: true,
     onKeystroke: (key) => console.log(`Custom handler received key: "${key}"`),
   });
   const outcome4 = await op4.run();
 
-  if (outcome4.ok)
-  {
-    console.log('✅ Selected:', outcome4.value);
-  }
-  else if (outcome4.failure === 'canceled')
-  {
-    console.log('🚫 Canceled');
+  if (outcome4.ok) {
+    console.log("✅ Selected:", outcome4.value);
+  } else if (outcome4.failure === "canceled") {
+    console.log("🚫 Canceled");
   }
 }
