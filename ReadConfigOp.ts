@@ -3,7 +3,12 @@
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { getConfigNamespace, sanitizeKey, sanitizeNamespace } from './ConfigContext.ts';
+import process from 'node:process';
+import {
+  getConfigNamespace,
+  sanitizeKey,
+  sanitizeNamespace,
+} from './ConfigContext.ts';
 import type { IOContext } from './IOContext.ts';
 import { JSONCTCParseOp } from './JSONCTCParseOp.ts';
 import { Op } from './Op.ts';
@@ -69,10 +74,9 @@ export class ReadConfigOp<T = unknown> extends Op
     super();
   }
 
-  async run(_io?: IOContext): Promise<
-    | Success<T>
-    | Failure<'notFound' | 'parseError' | 'accessDenied'>
-  >
+  async run(
+    _io?: IOContext,
+  ): Promise<Success<T> | Failure<'notFound' | 'parseError' | 'accessDenied'>>
   {
     await Promise.resolve();
 
@@ -108,7 +112,10 @@ export class ReadConfigOp<T = unknown> extends Op
 
       if (!parseResult.ok)
       {
-        return this.fail('parseError' as const, `${parseResult.debugData || 'Parse error'}: ${configPath}`);
+        return this.fail(
+          'parseError' as const,
+          `${parseResult.debugData || 'Parse error'}: ${configPath}`,
+        );
       }
 
       return this.succeed(parseResult.value);
@@ -120,7 +127,10 @@ export class ReadConfigOp<T = unknown> extends Op
         const code = (error as { code: string }).code;
         if (code === 'EACCES' || code === 'EPERM')
         {
-          return this.fail('accessDenied' as const, `Cannot read: ${configPath}`);
+          return this.fail(
+            'accessDenied' as const,
+            `Cannot read: ${configPath}`,
+          );
         }
       }
 
