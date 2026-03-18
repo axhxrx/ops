@@ -6,10 +6,10 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "jsxImportSource": "react",
-    "lib": ["ESNext", "DOM", "deno.ns"],
-    "types": ["node", "bun-types"]
+    "lib": ["ESNext", "DOM", "deno.ns"]
   },
   "imports": {
+    "@axhxrx/op": "../op/mod.ts",
     "@std/fmt": "jsr:@std/fmt@^1.0.8",
     "react": "npm:react@19.1.1",
     "react/": "npm:/react@19.1.1/",

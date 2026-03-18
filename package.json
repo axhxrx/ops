@@ -22,6 +22,7 @@
     "check:lint": "bunx eslint --ext .ts ."
   },
   "dependencies": {
+    "@axhxrx/op": "workspace:*",
     "@jsr/axhxrx__assert-never": "^0.2.1",
     "@jsr/cliffy__prompt": "1.0.0-rc.8",
     "@std/fmt": "npm:@jsr/std__fmt",

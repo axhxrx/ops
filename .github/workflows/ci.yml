@@ -1,7 +1,7 @@
 name: CI + Publish (if needed)
 on:
   push:
-    branches: ['*']
+    branches: ["*"]
 
 jobs:
   test:
@@ -35,24 +35,26 @@ jobs:
         run: deno publish --dry-run --allow-dirty --allow-slow-types
 
   # Only run if we're on main and the test job succeeded:
-  publish:
-    needs: [test]
-    runs-on: ubuntu-latest
-    if: ${{ success() && startsWith(github.ref, 'refs/heads/main') }}
+  # publish:
+  #   needs: [test]
+  #   runs-on: ubuntu-latest
+  #   if: ${{ success() && startsWith(github.ref, 'refs/heads/main') }}
 
-    permissions:
-      contents: read
-      id-token: write
+  #   permissions:
+  #     contents: read
+  #     id-token: write
 
-    steps:
-      - uses: actions/checkout@v4
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - uses: denoland/setup-deno@v2
-        with:
-          deno-version: v2.x
+  #     - uses: denoland/setup-deno@v2
+  #       with:
+  #         deno-version: v2.x
 
-      - name: Install dependencies
-        run: deno install
+  #     - name: Install dependencies
+  #       run: deno install
 
-      - name: 'Publish package (if new version exists)'
-        run: npx jsr publish --allow-dirty --allow-slow-types
+  #     - name: 'Publish package (if new version exists)'
+  #       run: npx jsr publish --allow-dirty --allow-slow-types
+
+  # mason 2026-03-18 disable publish until @axhxrx/op
