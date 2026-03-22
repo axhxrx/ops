@@ -11,7 +11,7 @@ export * from './Outcome.ts';
 export type { IOContext } from '@axhxrx/op';
 export { createIOContext } from '@axhxrx/op';
 
-export { Logger, createDefaultLogger } from '@axhxrx/op';
+export { createDefaultLogger, Logger } from '@axhxrx/op';
 export { isOp } from '@axhxrx/op';
 export { isHandler } from '@axhxrx/op';
 export type { HandlerWithMeta } from '@axhxrx/op';
@@ -25,7 +25,7 @@ export { ReplayableStdin } from '@axhxrx/op';
 
 export { TeeStream } from '@axhxrx/op';
 export type { TeeStreamOptions } from '@axhxrx/op';
-export { stripAnsi, stripAnsiFromLines, hasAnsi } from '@axhxrx/op';
+export { hasAnsi, stripAnsi, stripAnsiFromLines } from '@axhxrx/op';
 
 export { PrintOp } from '@axhxrx/op';
 export type { PrintOpOptions } from '@axhxrx/op';
@@ -50,22 +50,12 @@ export { InfoPanel, Menu, MenuItem } from './MenuPrimitives.ts';
 export type { DynamicContent, LineContent } from './MenuPrimitives.ts';
 export { RenderMarkdownOp } from './RenderMarkdownOp.tsx';
 export { SelectFromFilesystemOp } from './SelectFromFilesystemOp.ts';
-export type {
-  FileSystemEntry,
-  FileSystemEntryType,
-  FileSystemSelectionMode,
-  SelectFromFilesystemOpOptions,
-} from './SelectFromFilesystemOp.ts';
+export type { FileSystemEntry, FileSystemEntryType, FileSystemSelectionMode,
+  SelectFromFilesystemOpOptions } from './SelectFromFilesystemOp.ts';
 export { SelectFromListOp } from './SelectFromListOp.tsx';
 export { ShowTableOp } from './ShowTableOp.tsx';
-export type {
-  ShowTableOpOptions,
-  TableColumn,
-  TableData,
-  TableDataProvider,
-  TableMode,
-  TableRow,
-} from './ShowTableOp.tsx';
+export type { ShowTableOpOptions, TableColumn, TableData, TableDataProvider, TableMode,
+  TableRow } from './ShowTableOp.tsx';
 export type { CustomKeyHandler } from './ShowTableOp.ui.tsx';
 
 export { Form, FormItem } from './FormPrimitives.ts';
